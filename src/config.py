@@ -15,3 +15,6 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+if not settings.MISTRAL_API_KEY:
+    raise RuntimeError("MISTRAL_API_KEY not set. Add it to .env or Colab Secrets.")
