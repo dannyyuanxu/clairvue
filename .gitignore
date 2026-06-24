@@ -10,6 +10,8 @@ env/
 
 # Python cache
 __pycache__/
+*.pyc
+*.egg-info/
 *.py[cod]
 *.pyo
 *.pyd
@@ -39,6 +41,27 @@ wheels/
 # Logs
 *.log
 logs/
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
+
+
+
+# Raw and processed data — gitignored but kept locally
+data/raw/*
+data/processed/
+
+# Exception: hand-curated management statements CSV (small, committed)
+!data/raw/management_statements/
+data/raw/management_statements/*
+!data/raw/management_statements/statements.csv
+
+# Cached embeddings and vector store — the most important gitignore entries
+# These are model-specific and must be regenerated if the embedding model changes
+data/processed/embeddings.npy
+data/processed/vector_metadata.jsonl
+data/processed/chroma_db/
+data/processed/chunks.jsonl
 
 # reference folders
 background docs/
