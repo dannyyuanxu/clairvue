@@ -12,7 +12,8 @@ DECOMPOSE_CLAIM_SYSTEM_PROMPT = (
 )
 
 # Verbatim from CLAUDE.md/PRD Section 12 ("System prompt for claim assessment").
-ASSESS_CLAIM_SYSTEM_PROMPT = """You are a financial research evidence assistant for institutional analysts.
+ASSESS_CLAIM_SYSTEM_PROMPT = """You are a financial research evidence assistant for \
+institutional analysts.
 Your role is to assess whether a management statement is supported by formal evidence.
 
 Rules:
@@ -42,6 +43,7 @@ Rules:
 
 
 def decompose_claim_messages(statement: str) -> list[dict]:
+    """Messages for decomposing a management statement into atomic claims."""
     user_prompt = (
         f'Management statement:\n"{statement}"\n\n'
         "Decompose this statement into 2-5 atomic claims. Each claim must be a single "
@@ -56,6 +58,7 @@ def decompose_claim_messages(statement: str) -> list[dict]:
 
 
 def assess_claim_messages(claim: str, evidence: str, metrics_text: str) -> list[dict]:
+    """Messages for assessing a single atomic claim against its retrieved evidence."""
     user_prompt = f"""Claim to assess: "{claim}"
 
 Evidence:
@@ -70,7 +73,9 @@ schema exactly:
   "claim": str,
   "assessment": "supported|partially_supported|contradicted|insufficient_evidence",
   "rationale": str,
-  "supporting_evidence": [{{"company": str, "source_type": str, "filing_type": str, "period": str, "section": str, "excerpt": str}}],
+  "supporting_evidence": [
+    {{"company": str, "source_type": str, "filing_type": str, "period": str, "section": str, "excerpt": str}}
+  ],
   "qualifying_evidence": [<same shape as supporting_evidence>],
   "contradictory_evidence": [<same shape as supporting_evidence>],
   "relevant_metrics": [{{"ticker": str, "metric_name": str, "period": str, "value": str, "change": str}}],
@@ -89,8 +94,10 @@ def peer_comparison_messages(
     metrics_text: str,
     tickers: list[str],
 ) -> list[dict]:
+    """Messages for comparing peer banks' evidence against a single question."""
     evidence_sections = "\n\n".join(
-        f"=== {ticker} ===\n{bank_evidence.get(ticker, 'No evidence retrieved.')}" for ticker in tickers
+        f"=== {ticker} ===\n{bank_evidence.get(ticker, 'No evidence retrieved.')}"
+        for ticker in tickers
     )
 
     user_prompt = f"""Analyst question: {question}
@@ -132,7 +139,11 @@ def _period_label(period_end: str) -> str:
     return f"{year}-Q{quarter}"
 
 
-def format_metrics_for_prompt(metrics_df: pd.DataFrame, tickers: list[str], metric_names: list[str] | None = None) -> str:
+def format_metrics_for_prompt(
+    metrics_df: pd.DataFrame,
+    tickers: list[str],
+    metric_names: list[str] | None = None,
+) -> str:
     """Formats a filtered slice of the metrics dataframe as readable text for prompt inclusion."""
     df = metrics_df[metrics_df["ticker"].isin(tickers)]
     if metric_names:
@@ -149,7 +160,8 @@ def format_metrics_for_prompt(metrics_df: pd.DataFrame, tickers: list[str], metr
 
         lines.append(f"{ticker}:")
         for metric_name in metric_names or sorted(ticker_rows["metric_name"].unique()):
-            metric_rows = ticker_rows[ticker_rows["metric_name"] == metric_name].sort_values("period_end")
+            metric_rows = ticker_rows[ticker_rows["metric_name"] == metric_name]
+            metric_rows = metric_rows.sort_values("period_end")
             if metric_rows.empty:
                 continue
 
@@ -164,6 +176,8 @@ def format_metrics_for_prompt(metrics_df: pd.DataFrame, tickers: list[str], metr
                 period = _period_label(row["period_end"])
                 yoy = row.get("yoy_change_pct")
                 yoy_str = f", YoY {yoy:+.1f}%" if pd.notna(yoy) else ""
-                lines.append(f"    {period}: ${row['value_billions']:.2f}B (source: {row['source']}{yoy_str})")
+                lines.append(
+                    f"    {period}: ${row['value_billions']:.2f}B (source: {row['source']}{yoy_str})"
+                )
 
     return "\n".join(lines)
