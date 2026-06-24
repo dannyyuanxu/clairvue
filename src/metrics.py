@@ -11,7 +11,6 @@ in-window data wins; the concept actually used is always recorded in concept_use
 
 import argparse
 import json
-import time
 from collections import defaultdict
 from datetime import date
 from pathlib import Path
@@ -292,13 +291,6 @@ def calculate_period_changes(df: pd.DataFrame) -> pd.DataFrame:
 
 def load_metrics(path: str = METRICS_CSV_PATH) -> pd.DataFrame:
     return pd.read_csv(path)
-
-
-def get_metric(df: pd.DataFrame, ticker: str, metric_name: str, period: str) -> float:
-    match = df[(df["ticker"] == ticker) & (df["metric_name"] == metric_name) & (df["period_end"] == period)]
-    if match.empty:
-        raise ValueError(f"No metric '{metric_name}' for {ticker} at period {period}")
-    return float(match.iloc[0]["value"])
 
 
 def _period_label(period_end: str) -> str:

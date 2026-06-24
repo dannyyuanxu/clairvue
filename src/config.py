@@ -1,7 +1,11 @@
+"""Environment-backed settings, loaded once at import time."""
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
+    """All env vars the system reads, with defaults for everything except the API key."""
+
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     MISTRAL_API_KEY: str = ""

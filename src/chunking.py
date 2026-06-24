@@ -364,10 +364,6 @@ def chunk_all_filings(enrich: bool = False) -> list[dict]:
     return all_chunks
 
 
-def chunk_filing(text: str, metadata: dict) -> list[dict]:
-    raise NotImplementedError
-
-
 def _main() -> None:
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument("--enrich", action="store_true")
