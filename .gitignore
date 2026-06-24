@@ -1,6 +1,6 @@
 # Environment
 .env
-.env.*
+!.env.example
 
 # Python virtual environment
 clairvue/
@@ -11,8 +11,6 @@ env/
 # Python cache
 __pycache__/
 *.pyc
-*.egg-info/
-*.py[cod]
 *.pyo
 *.pyd
 .Python
@@ -45,23 +43,33 @@ logs/
 # Jupyter checkpoints
 .ipynb_checkpoints/
 
-
-
-# Raw and processed data — gitignored but kept locally
+# Raw and processed data — gitignored but kept locally; see CLAUDE.md for caching architecture
 data/raw/*
-data/processed/
+data/processed/*
 
-# Exception: hand-curated management statements CSV (small, committed)
-!data/raw/management_statements/
-data/raw/management_statements/*
-!data/raw/management_statements/statements.csv
-
-# Cached embeddings and vector store — the most important gitignore entries
-# These are model-specific and must be regenerated if the embedding model changes
+# Cached embeddings and vector store — model-specific, regenerate if embedding model changes
 data/processed/embeddings.npy
 data/processed/vector_metadata.jsonl
 data/processed/chroma_db/
 data/processed/chunks.jsonl
+
+# Exceptions: hand-curated, small files that SHOULD be committed
+!data/raw/management_statements/
+data/raw/management_statements/*
+!data/raw/management_statements/statements.csv
+!data/raw/management_statements/.gitkeep
+
+!data/raw/sec_filings/
+data/raw/sec_filings/*
+!data/raw/sec_filings/.gitkeep
+
+!data/raw/xbrl/
+data/raw/xbrl/*
+!data/raw/xbrl/.gitkeep
+
+!data/processed/.gitkeep
+!data/processed/metrics.csv
+!data/processed/eval_questions.csv
 
 # reference folders
 background docs/

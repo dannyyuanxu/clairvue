@@ -1,0 +1,11 @@
+mistralai
+chromadb
+numpy
+pandas
+pydantic
+pydantic-settings
+python-dotenv
+requests
+markdownify
+beautifulsoup4
+lxml
