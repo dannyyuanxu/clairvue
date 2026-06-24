@@ -77,4 +77,7 @@ def download_filing(filing_url: str, dest_path: str) -> str:
 
 
 def get_xbrl_facts(cik: str) -> dict:
-    raise NotImplementedError
+    response = requests.get(EDGAR_XBRL_FACTS_URL.format(cik=cik), headers=_sec_headers())
+    response.raise_for_status()
+    time.sleep(RATE_LIMIT_SECONDS)
+    return response.json()
