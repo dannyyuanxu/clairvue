@@ -13,6 +13,7 @@ EDGAR_XBRL_FACTS_URL = "https://data.sec.gov/api/xbrl/companyfacts/CIK{cik}.json
 
 RATE_LIMIT_SECONDS = 0.15
 REQUEST_TIMEOUT_SECONDS = 30
+XBRL_FACTS_TIMEOUT_SECONDS = 15  # companyfacts payloads are 5-20MB; finite but generous
 
 
 def _sec_headers() -> dict:
@@ -83,7 +84,7 @@ def download_filing(filing_url: str, dest_path: str) -> str:
 
 def get_xbrl_facts(cik: str) -> dict:
     response = requests.get(
-        EDGAR_XBRL_FACTS_URL.format(cik=cik), headers=_sec_headers(), timeout=REQUEST_TIMEOUT_SECONDS
+        EDGAR_XBRL_FACTS_URL.format(cik=cik), headers=_sec_headers(), timeout=XBRL_FACTS_TIMEOUT_SECONDS
     )
     response.raise_for_status()
     time.sleep(RATE_LIMIT_SECONDS)
