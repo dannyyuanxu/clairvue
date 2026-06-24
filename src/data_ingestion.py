@@ -12,6 +12,7 @@ EDGAR_SUBMISSIONS_PAGE_URL = "https://data.sec.gov/submissions/{name}"
 EDGAR_XBRL_FACTS_URL = "https://data.sec.gov/api/xbrl/companyfacts/CIK{cik}.json"
 
 RATE_LIMIT_SECONDS = 0.15
+REQUEST_TIMEOUT_SECONDS = 30
 
 
 def _sec_headers() -> dict:
@@ -21,7 +22,9 @@ def _sec_headers() -> dict:
 def get_cik_submissions(cik: str) -> dict:
     """Fetch the full submissions JSON for a CIK, merging any paginated
     older-filings pages into filings.recent's parallel arrays."""
-    response = requests.get(EDGAR_SUBMISSIONS_URL.format(cik=cik), headers=_sec_headers())
+    response = requests.get(
+        EDGAR_SUBMISSIONS_URL.format(cik=cik), headers=_sec_headers(), timeout=REQUEST_TIMEOUT_SECONDS
+    )
     response.raise_for_status()
     time.sleep(RATE_LIMIT_SECONDS)
     data = response.json()
@@ -31,7 +34,9 @@ def get_cik_submissions(cik: str) -> dict:
 
     for page in data["filings"].get("files", []):
         page_response = requests.get(
-            EDGAR_SUBMISSIONS_PAGE_URL.format(name=page["name"]), headers=_sec_headers()
+            EDGAR_SUBMISSIONS_PAGE_URL.format(name=page["name"]),
+            headers=_sec_headers(),
+            timeout=REQUEST_TIMEOUT_SECONDS,
         )
         page_response.raise_for_status()
         time.sleep(RATE_LIMIT_SECONDS)
@@ -68,7 +73,7 @@ def get_filing_index(cik: str, forms: set[str], start_date: str, end_date: str) 
 
 
 def download_filing(filing_url: str, dest_path: str) -> str:
-    response = requests.get(filing_url, headers=_sec_headers())
+    response = requests.get(filing_url, headers=_sec_headers(), timeout=REQUEST_TIMEOUT_SECONDS)
     response.raise_for_status()
     time.sleep(RATE_LIMIT_SECONDS)
     Path(dest_path).parent.mkdir(parents=True, exist_ok=True)
@@ -77,7 +82,9 @@ def download_filing(filing_url: str, dest_path: str) -> str:
 
 
 def get_xbrl_facts(cik: str) -> dict:
-    response = requests.get(EDGAR_XBRL_FACTS_URL.format(cik=cik), headers=_sec_headers())
+    response = requests.get(
+        EDGAR_XBRL_FACTS_URL.format(cik=cik), headers=_sec_headers(), timeout=REQUEST_TIMEOUT_SECONDS
+    )
     response.raise_for_status()
     time.sleep(RATE_LIMIT_SECONDS)
     return response.json()
