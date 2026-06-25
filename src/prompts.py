@@ -25,7 +25,32 @@ ASSESS_QUOTE_RULE = (
     'verbatim -- do not truncate, do not paraphrase. Return this as the "relevant_quote" '
     "field. Choose the sentence that most directly supports or contradicts the claim being "
     "assessed. If no single sentence is decisive, return the two most relevant consecutive "
-    "sentences."
+    "sentences. If the most relevant evidence is a table row, do NOT return bare pipe-"
+    "delimited cells (e.g. '| 0.88 | 1.05 |'): rewrite it as a self-contained phrase that "
+    "names the row label, the period, and the unit -- e.g. '30+ day delinquency rate "
+    "(card), 2023-Q1: 0.88%'. Never cite a number whose meaning isn't clear from the quote alone."
+)
+
+# "Normalization" is meaningless without a reference level; spelled out here so the model
+# checks the claim against the pre-pandemic baseline supplied in the metrics block rather
+# than reading a YoY increase as deterioration.
+METRIC_INTERPRETATION_RULE = (
+    "When you cite a quantitative metric you MUST interpret it, not just quote it. The metrics "
+    "block already gives you each metric's level, its direction vs the prior period, its "
+    "standing vs the pre-pandemic (2019) baseline, and the peer cross-section -- use them. "
+    "State whether the figure is high or low and rising or falling, RELATIVE TO (a) the prior "
+    "period, (b) the 2019 baseline, and (c) peer banks, and say what that implies for the claim. "
+    "A bare number with no comparison is not acceptable evidence."
+)
+
+NORMALIZATION_RULE = (
+    "Interpret 'normalizing' / 'losses returning to normal' as credit losses moving back toward "
+    "their pre-pandemic (2019) baseline after the 2020-2021 stimulus-suppressed trough -- so a "
+    "loss rate that is RISING from the trough but still at or below the 2019 baseline is "
+    "consistent with normalization, NOT deterioration. If no pre-2020 baseline is available for "
+    "the bank, say the baseline is missing rather than guessing. Treat 'in line with "
+    "expectations' as a separate claim that requires the bank's own prior guidance to verify; if "
+    "that guidance isn't in the evidence, mark that specific point insufficient."
 )
 
 
@@ -41,6 +66,8 @@ def _assess_system_prompt(verbose: bool) -> str:
         "If evidence is missing or insufficient, say so explicitly -- do not fill gaps with inference.",
         "Cite the source of every material conclusion (company, filing type, period, section).",
         ASSESS_QUOTE_RULE,
+        METRIC_INTERPRETATION_RULE,
+        NORMALIZATION_RULE,
     ]
     if verbose:
         rules.append("Include analyst follow-up questions for any unresolved gaps.")
@@ -193,16 +220,99 @@ def _period_label(period_end: str) -> str:
     return f"{year}-Q{quarter}"
 
 
+# Metric framing is aligned to the ingested filing window so the numbers line up with the
+# qualitative evidence; the pre-2020 rows backfilled into metrics.csv are used only as a
+# baseline, never shown as "current".
+CORPUS_WINDOW_END = "2023-12-31"
+BASELINE_CUTOFF = "2020-01-01"  # rows before this are the pre-pandemic baseline
+RATE_METRICS = {"net_charge_off_rate"}
+# Dollar metrics shown as level + YoY. net_charge_offs is deliberately omitted from the
+# dollar block: it is YTD-cumulative (so a bare dollar figure misleads) and is fully
+# represented, on a comparable annualized basis, by net_charge_off_rate.
+DOLLAR_METRICS_TO_SHOW = ["provision_for_credit_losses", "allowance_for_credit_losses", "total_loans"]
+
+
+def _direction_word(delta: float, flat_threshold: float) -> str:
+    if pd.isna(delta):
+        return ""
+    if delta > flat_threshold:
+        return "rising"
+    if delta < -flat_threshold:
+        return "falling"
+    return "flat"
+
+
+def _format_rate_block(rate_rows: pd.DataFrame) -> list[str]:
+    """Pre-framed net-charge-off-rate lines: current level, QoQ move (in pp), level vs the
+    pre-pandemic baseline and cycle trough, and the recent trail -- so the model interprets
+    rather than computes."""
+    rate_rows = rate_rows.sort_values("period_end")
+    in_window = rate_rows[rate_rows["period_end"] <= CORPUS_WINDOW_END]
+    if in_window.empty:
+        return []
+    latest = in_window.iloc[-1]
+    latest_period = _period_label(latest["period_end"])
+    value = latest["value"]
+
+    qoq = latest.get("qoq_change_abs")
+    qoq_str = f"QoQ {qoq:+.2f}pp ({_direction_word(qoq, 0.02)})" if pd.notna(qoq) else "QoQ n/a"
+
+    baseline_rows = rate_rows[rate_rows["period_end"] < BASELINE_CUTOFF]
+    if baseline_rows.empty:
+        baseline_str = "no pre-2020 baseline available for this bank (cannot anchor 'normalization')"
+    else:
+        baseline = baseline_rows["value"].mean()
+        diff = value - baseline
+        if diff < -0.05:
+            rel = f"below by {abs(diff):.2f}pp (not yet back to pre-pandemic normal)"
+        elif diff > 0.05:
+            rel = f"above by {diff:.2f}pp"
+        else:
+            rel = "~in line"
+        trough = in_window["value"].min()
+        baseline_str = f"vs 2019 baseline {baseline:.2f}%: {rel}; cycle trough {trough:.2f}%"
+
+    trail = in_window.tail(4)
+    trail_str = " -> ".join(f"{_period_label(r['period_end'])} {r['value']:.2f}%" for _, r in trail.iterrows())
+
+    return [
+        "  net_charge_off_rate (annualized loss rate -- KEY interpretable metric):",
+        f"    latest {latest_period}: {value:.2f}% | {qoq_str} | {baseline_str}",
+        f"    recent trail: {trail_str}",
+    ]
+
+
+def _peer_rate_cross_section(df: pd.DataFrame, tickers: list[str]) -> list[str]:
+    """One line ranking each bank's latest in-window NCO rate, so 'is this high or low?' is
+    answerable by direct peer comparison."""
+    latest_by_ticker = {}
+    for ticker in tickers:
+        rows = df[
+            (df["ticker"] == ticker)
+            & (df["metric_name"] == "net_charge_off_rate")
+            & (df["period_end"] <= CORPUS_WINDOW_END)
+        ].sort_values("period_end")
+        if not rows.empty:
+            latest_by_ticker[ticker] = rows.iloc[-1]["value"]
+    if len(latest_by_ticker) < 2:
+        return []
+    ranked = sorted(latest_by_ticker.items(), key=lambda kv: kv[1], reverse=True)
+    chain = "  >  ".join(f"{tk} {val:.2f}%" for tk, val in ranked)
+    return ["", "Peer cross-section -- net_charge_off_rate (annualized, latest quarter, highest first):", f"  {chain}"]
+
+
 def format_metrics_for_prompt(
     metrics_df: pd.DataFrame,
     tickers: list[str],
     metric_names: list[str] | None = None,
 ) -> str:
-    """Formats a filtered slice of the metrics dataframe as readable text for prompt inclusion."""
-    df = metrics_df[metrics_df["ticker"].isin(tickers)]
+    """Formats the metrics slice as PRE-INTERPRETED text: rates with direction, baseline and
+    peer framing rather than raw dollar dumps. The arithmetic (rates, deltas, baselines) is
+    done here in Python so the model's job is narrative interpretation, not computation."""
+    df = metrics_df[metrics_df["ticker"].isin(tickers) & metrics_df["period_end"].notna()]
+    df = df[df["source"] != "unavailable_xbrl"]
     if metric_names:
         df = df[df["metric_name"].isin(metric_names)]
-
     if df.empty:
         return "No metrics available."
 
@@ -211,27 +321,22 @@ def format_metrics_for_prompt(
         ticker_rows = df[df["ticker"] == ticker]
         if ticker_rows.empty:
             continue
-
         lines.append(f"{ticker}:")
-        for metric_name in metric_names or sorted(ticker_rows["metric_name"].unique()):
+
+        rate_rows = ticker_rows[ticker_rows["metric_name"] == "net_charge_off_rate"]
+        if not rate_rows.empty:
+            lines.extend(_format_rate_block(rate_rows))
+
+        for metric_name in DOLLAR_METRICS_TO_SHOW:
             metric_rows = ticker_rows[ticker_rows["metric_name"] == metric_name]
-            metric_rows = metric_rows.sort_values("period_end")
+            metric_rows = metric_rows[metric_rows["period_end"] <= CORPUS_WINDOW_END].sort_values("period_end")
             if metric_rows.empty:
                 continue
+            row = metric_rows.iloc[-1]
+            period = _period_label(row["period_end"])
+            yoy = row.get("yoy_change_pct")
+            yoy_str = f" (YoY {yoy:+.1f}%)" if pd.notna(yoy) else ""
+            lines.append(f"  {metric_name}: {period} ${row['value_billions']:.2f}B{yoy_str}")
 
-            if (metric_rows["source"] == "unavailable_xbrl").all():
-                lines.append(f"  {metric_name}: Not available in XBRL.")
-                continue
-
-            lines.append(f"  {metric_name}:")
-            for _, row in metric_rows.iterrows():
-                if row["source"] == "unavailable_xbrl" or pd.isna(row["period_end"]):
-                    continue
-                period = _period_label(row["period_end"])
-                yoy = row.get("yoy_change_pct")
-                yoy_str = f", YoY {yoy:+.1f}%" if pd.notna(yoy) else ""
-                lines.append(
-                    f"    {period}: ${row['value_billions']:.2f}B (source: {row['source']}{yoy_str})"
-                )
-
+    lines.extend(_peer_rate_cross_section(df, tickers))
     return "\n".join(lines)

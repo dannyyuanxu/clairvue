@@ -14,11 +14,11 @@ real ChromaDB index (9,750 chunks across 15 filings + management statements).
 | `src/chunking.py` | Section-aware chunking, risk-theme tagging, optional LLM context enrichment. |
 | `src/embeddings.py` | Batch embedding via `LLMClient`, with cache validation against the chunk count and embedding model. |
 | `src/vector_store.py` | ChromaDB wrapper — index build, metadata-filtered query. |
-| `src/metrics.py` | XBRL metrics pipeline (provision, allowance, net charge-offs, total loans) with per-bank concept-coverage resolution. |
+| `src/metrics.py` | XBRL metrics pipeline (provision, allowance, net charge-offs, total loans, + computed annualized net-charge-off **rate**) with per-bank concept-coverage resolution. Quantitative series are backfilled to 2019 for a pre-pandemic baseline; filing *text* stays Q4'22–Q4'23. |
 | `src/retrieval.py` | `EvidenceRetriever` — metadata-filtered retrieval + contradiction-query expansion. |
-| `src/prompts.py` | All system/user prompt templates (no LLM calls). |
+| `src/prompts.py` | All system/user prompt templates (no LLM calls). `format_metrics_for_prompt` pre-computes rate/direction/baseline/peer framing so the model interprets rather than calculates. |
 | `src/generation.py` | `answer_claim()` and `compare_peers()` — the two top-level workflows. |
-| `src/demo.py` | Pretty-printers + the 3 interview demo scenarios; writes `outputs/sample_answers.json`. |
+| `src/demo.py` | ANSI pretty-printers + Markdown renderers (`display_claim_assessment`/`display_peer_comparison`, used in the notebook) + the 3 interview demo scenarios; writes `outputs/sample_answers.json`. |
 | `src/evaluation.py` | Runs `data/processed/eval_questions.csv` through the live pipeline. |
 | `scripts/download_filings.py` | CLI: fetch the 15 target filings into `data/raw/sec_filings/`. |
 | `scripts/build_index.py` | CLI: runs the full pipeline end-to-end, resumable with `--from-step`. |

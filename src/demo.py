@@ -28,6 +28,21 @@ RISK_DIRECTION_LABELS = {
     "unclear": ("UNCLEAR", "90"),
 }
 
+# Emoji + human label for the Markdown renderer (used in the Colab notebook, where Markdown
+# renders far more readably than the ANSI terminal output).
+ASSESSMENT_MD = {
+    "supported": ("🟢", "Supported"),
+    "partially_supported": ("🟡", "Partially supported"),
+    "contradicted": ("🔴", "Contradicted"),
+    "insufficient_evidence": ("⚪", "Insufficient evidence"),
+}
+RISK_DIRECTION_MD = {
+    "improving": ("🟢", "Improving"),
+    "stable": ("🔵", "Stable"),
+    "deteriorating": ("🔴", "Deteriorating"),
+    "unclear": ("⚪", "Unclear"),
+}
+
 DEMO_1_STATEMENT = (
     "Consumer credit remains resilient, and losses are normalizing in line with expectations."
 )
@@ -115,7 +130,6 @@ def print_claim_assessment(result: dict, verbose: bool = False) -> None:
 
     print()
     print(f"OVERALL ASSESSMENT: {_bracket_label(result['overall_assessment'], ASSESSMENT_LABELS)}")
-    print(f"CONFIDENCE: {result['confidence']}")
     print()
 
 
@@ -143,6 +157,126 @@ def print_peer_comparison(result: dict) -> None:
         for limitation in limitations:
             print(f"  - {limitation}")
     print()
+
+
+def _md_evidence_bullet(item: dict) -> str:
+    """One Markdown bullet for a cited evidence item: verbatim quote + source citation."""
+    quote = (item.get("relevant_quote") or item.get("excerpt", "")).strip()
+    company = item.get("company", "")
+    filing_type = item.get("filing_type", "?")
+    period = item.get("period", "?")
+    return f'- "{quote}" — *{company}, {filing_type} {period}*'
+
+
+def _md_metrics_table(metrics: list[dict]) -> list[str]:
+    """Markdown table of the metrics the model cited for a claim (empty if none)."""
+    if not metrics:
+        return []
+    rows = ["", "| Ticker | Metric | Period | Value | Change |", "|---|---|---|---|---|"]
+    for metric in metrics:
+        rows.append(
+            f"| {metric.get('ticker', '')} | {metric.get('metric_name', '')} "
+            f"| {metric.get('period', '')} | {metric.get('value', '')} | {metric.get('change', '')} |"
+        )
+    return rows
+
+
+def claim_assessment_markdown(result: dict, verbose: bool = False) -> str:
+    """Render an answer_claim() result as Markdown -- the notebook-friendly view.
+
+    Unlike the ANSI printer, this leads each claim with its plain-English rationale (the
+    headline), then a compact metrics table, then evidence grouped as Supporting / Watch /
+    Contradicting / Peer, plus what's missing. This is where the numeric interpretation the
+    model produced actually becomes visible."""
+    overall_emoji, overall_label = ASSESSMENT_MD.get(result["overall_assessment"], ("⚪", result["overall_assessment"]))
+    lines = [
+        "## Statement assessment",
+        f"> {result['original_statement']}",
+        "",
+        f"**Overall: {overall_emoji} {overall_label}**",
+    ]
+
+    for claim_assessment in result["claim_assessments"]:
+        assessment = claim_assessment.get("assessment", "insufficient_evidence")
+        emoji, label = ASSESSMENT_MD.get(assessment, ("⚪", assessment))
+        claim = claim_assessment.get("claim", "")
+        lines += ["", "---", f"### {emoji} {claim}", f"**{label}**"]
+
+        rationale = claim_assessment.get("rationale", "").strip()
+        if rationale:
+            lines += ["", rationale]
+
+        lines += _md_metrics_table(claim_assessment.get("relevant_metrics", []))
+
+        groups = [
+            ("Supporting", claim_assessment.get("supporting_evidence", [])),
+            ("Qualifying / watch", claim_assessment.get("qualifying_evidence", [])),
+            ("Contradicting", claim_assessment.get("contradictory_evidence", [])),
+            ("Peer context", claim_assessment.get("peer_context", [])),
+        ]
+        for title, items in groups:
+            if items:
+                lines += ["", f"**{title}**", *[_md_evidence_bullet(item) for item in items]]
+
+        missing = claim_assessment.get("missing_information", [])
+        if missing:
+            lines += ["", "**Missing**", *[f"- {item}" for item in missing]]
+
+        if verbose and claim_assessment.get("analyst_follow_up_questions"):
+            lines += ["", "**Follow-up questions**", *[f"- {q}" for q in claim_assessment["analyst_follow_up_questions"]]]
+
+    return "\n".join(lines)
+
+
+def display_claim_assessment(result: dict, verbose: bool = False) -> None:
+    """Display an answer_claim() result as rendered Markdown in a notebook, falling back to
+    the ANSI printer when not in an IPython/Colab environment."""
+    try:
+        from IPython.display import Markdown, display
+    except ImportError:
+        print_claim_assessment(result, verbose=verbose)
+        return
+    display(Markdown(claim_assessment_markdown(result, verbose=verbose)))
+
+
+def peer_comparison_markdown(result: dict) -> str:
+    """Render a compare_peers() result as Markdown -- the notebook-friendly view."""
+    lines = ["## Peer comparison", f"> {result.get('question', '')}", ""]
+
+    for bank in result.get("bank_assessments", []):
+        direction = bank.get("risk_direction", "unclear")
+        emoji, label = RISK_DIRECTION_MD.get(direction, ("⚪", direction))
+        lines += [
+            "---",
+            f"### {bank.get('ticker', '')} — {bank.get('company', '')} {emoji} {label}",
+            bank.get("summary", ""),
+        ]
+        if bank.get("metrics_summary"):
+            lines += ["", f"*Metrics:* {bank['metrics_summary']}"]
+        excerpts = bank.get("evidence_excerpts", [])
+        if excerpts:
+            lines += ["", "**Evidence**", *[f"- {excerpt}" for excerpt in excerpts]]
+        lines.append("")
+
+    if result.get("strongest_deterioration_signal"):
+        lines += ["---", f"**Strongest deterioration signal:** {result['strongest_deterioration_signal']}", ""]
+    if result.get("overall_summary"):
+        lines += [f"**Overall:** {result['overall_summary']}", ""]
+    limitations = result.get("comparability_limitations", [])
+    if limitations:
+        lines += ["**Comparability limitations**", *[f"- {limitation}" for limitation in limitations]]
+    return "\n".join(lines)
+
+
+def display_peer_comparison(result: dict) -> None:
+    """Display a compare_peers() result as rendered Markdown in a notebook, falling back to
+    the ANSI printer when not in an IPython/Colab environment."""
+    try:
+        from IPython.display import Markdown, display
+    except ImportError:
+        print_peer_comparison(result)
+        return
+    display(Markdown(peer_comparison_markdown(result)))
 
 
 def run_demos() -> dict:
