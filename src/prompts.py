@@ -11,21 +11,42 @@ DECOMPOSE_CLAIM_SYSTEM_PROMPT = (
     "Return JSON with a single key 'atomic_claims' containing a list of strings."
 )
 
-# Verbatim from CLAUDE.md/PRD Section 12 ("System prompt for claim assessment").
-ASSESS_CLAIM_SYSTEM_PROMPT = """You are a financial research evidence assistant for \
-institutional analysts.
-Your role is to assess whether a management statement is supported by formal evidence.
+# Rules 1-6 + the follow-up rule are verbatim from CLAUDE.md/PRD Section 12
+# ("System prompt for claim assessment"). The quote-extraction rule is new, and the
+# follow-up rule is now gated on verbose -- see _assess_system_prompt().
+ASSESS_CLAIM_INTRO = (
+    "You are a financial research evidence assistant for institutional analysts.\n"
+    "Your role is to assess whether a management statement is supported by formal evidence."
+)
 
-Rules:
-1. Use ONLY the supplied evidence chunks and metrics. Do not use prior knowledge.
-2. Do not make buy, sell, or price recommendations.
-3. Explicitly distinguish formal SEC disclosures (authority: formal_disclosure) from
-   management commentary (authority: management_commentary).
-4. Classify each claim as: supported, partially_supported, contradicted, or insufficient_evidence.
-5. If evidence is missing or insufficient, say so explicitly -- do not fill gaps with inference.
-6. Cite the source of every material conclusion (company, filing type, period, section).
-7. Include analyst follow-up questions for any unresolved gaps.
-8. Return valid JSON matching the required schema exactly."""
+ASSESS_QUOTE_RULE = (
+    "For each piece of evidence you cite, you MUST extract and return the single most "
+    "relevant complete sentence or passage (up to 3 sentences maximum) from that chunk "
+    'verbatim -- do not truncate, do not paraphrase. Return this as the "relevant_quote" '
+    "field. Choose the sentence that most directly supports or contradicts the claim being "
+    "assessed. If no single sentence is decisive, return the two most relevant consecutive "
+    "sentences."
+)
+
+
+def _assess_system_prompt(verbose: bool) -> str:
+    """Builds the claim-assessment system prompt. The follow-up-questions rule is
+    only included when verbose=True, mirroring the schema (see assess_claim_messages)."""
+    rules = [
+        "Use ONLY the supplied evidence chunks and metrics. Do not use prior knowledge.",
+        "Do not make buy, sell, or price recommendations.",
+        "Explicitly distinguish formal SEC disclosures (authority: formal_disclosure) from "
+        "management commentary (authority: management_commentary).",
+        "Classify each claim as: supported, partially_supported, contradicted, or insufficient_evidence.",
+        "If evidence is missing or insufficient, say so explicitly -- do not fill gaps with inference.",
+        "Cite the source of every material conclusion (company, filing type, period, section).",
+        ASSESS_QUOTE_RULE,
+    ]
+    if verbose:
+        rules.append("Include analyst follow-up questions for any unresolved gaps.")
+    rules.append("Return valid JSON matching the required schema exactly.")
+    numbered = "\n".join(f"{i}. {rule}" for i, rule in enumerate(rules, start=1))
+    return f"{ASSESS_CLAIM_INTRO}\n\nRules:\n{numbered}"
 
 # Same grounding rules as claim assessment, adapted for comparing multiple banks at once.
 PEER_COMPARISON_SYSTEM_PROMPT = """You are a financial analyst assistant comparing consumer-credit \
@@ -57,33 +78,66 @@ def decompose_claim_messages(statement: str) -> list[dict]:
     ]
 
 
-def assess_claim_messages(claim: str, evidence: str, metrics_text: str) -> list[dict]:
-    """Messages for assessing a single atomic claim against its retrieved evidence."""
-    user_prompt = f"""Claim to assess: "{claim}"
+def assess_claim_messages(
+    claim: str,
+    primary_evidence_text: str,
+    metrics_text: str,
+    peer_evidence_text: str = "",
+    verbose: bool = False,
+) -> list[dict]:
+    """Messages for assessing a single atomic claim against its retrieved evidence.
 
-Evidence:
-{evidence}
+    Primary evidence (the bank's own filings) drives the verdict; peer evidence, when
+    present, is supplied separately as comparison-only context. Each cited evidence item
+    must include a verbatim relevant_quote. analyst_follow_up_questions is only requested
+    (in both the system prompt and the schema) when verbose=True."""
+    evidence_item = (
+        '{"company": str, "source_type": str, "filing_type": str, "period": str, '
+        '"section": str, "excerpt": str, "relevant_quote": str}'
+    )
 
-Relevant XBRL metrics:
-{metrics_text}
+    peer_section = ""
+    peer_instruction = ""
+    if peer_evidence_text.strip():
+        peer_section = (
+            "\nPEER BANK CONTEXT (for comparison -- do not base verdict on this alone):\n"
+            f"{peer_evidence_text}\n"
+        )
+        peer_instruction = (
+            " After stating your verdict based on the primary evidence, note in one sentence "
+            "whether the peer banks' evidence aligns with or diverges from the primary bank's "
+            "picture, and include that sentence in the rationale field."
+        )
 
-Assess this claim using only the evidence and metrics above. Return JSON matching this \
-schema exactly:
-{{
+    # Leading comma keeps the schema template valid JSON whether or not the line is present.
+    follow_up_line = ',\n  "analyst_follow_up_questions": [str]' if verbose else ""
+
+    schema = f"""{{
   "claim": str,
   "assessment": "supported|partially_supported|contradicted|insufficient_evidence",
   "rationale": str,
-  "supporting_evidence": [
-    {{"company": str, "source_type": str, "filing_type": str, "period": str, "section": str, "excerpt": str}}
-  ],
-  "qualifying_evidence": [<same shape as supporting_evidence>],
-  "contradictory_evidence": [<same shape as supporting_evidence>],
+  "supporting_evidence": [{evidence_item}],
+  "qualifying_evidence": [{evidence_item}],
+  "contradictory_evidence": [{evidence_item}],
+  "peer_context": [{evidence_item}],
   "relevant_metrics": [{{"ticker": str, "metric_name": str, "period": str, "value": str, "change": str}}],
-  "missing_information": [str],
-  "analyst_follow_up_questions": [str]
+  "missing_information": [str]{follow_up_line}
 }}"""
+
+    user_prompt = f"""Claim to assess: "{claim}"
+
+PRIMARY EVIDENCE (the bank's own filings -- base your verdict on this):
+{primary_evidence_text}
+{peer_section}
+Relevant XBRL metrics:
+{metrics_text}
+
+Assess this claim using only the evidence and metrics above.{peer_instruction} \
+Return JSON matching this schema exactly:
+{schema}"""
+
     return [
-        {"role": "system", "content": ASSESS_CLAIM_SYSTEM_PROMPT},
+        {"role": "system", "content": _assess_system_prompt(verbose)},
         {"role": "user", "content": user_prompt},
     ]
 

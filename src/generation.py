@@ -64,9 +64,13 @@ def answer_claim(
     ticker: str | None = None,
     risk_theme: str = "consumer_credit",
     metrics_df: pd.DataFrame | None = None,
+    verbose: bool = False,
 ) -> dict:
     """Full claim validation pipeline: decompose into atomic claims, then assess
-    each one independently against its own retrieved evidence and metrics."""
+    each one independently against its own retrieved evidence and metrics.
+
+    verbose=True additionally requests analyst_follow_up_questions in each per-claim
+    assessment; when False (default), those are omitted from the model's task entirely."""
     retriever = _get_retriever()
     llm_client = LLMClient()
     if metrics_df is None:
@@ -114,14 +118,20 @@ def answer_claim(
             primary_evidence_text = format_evidence_for_prompt(chunks)
             peer_evidence_text = ""
 
-        evidence_text = f"{primary_evidence_text}\n\n{peer_evidence_text}".strip()
         metrics_text = format_metrics_for_prompt(
             metrics_df,
             tickers=[ticker] if ticker else DEFAULT_TICKERS,
             metric_names=None,
         )
 
-        assessment = llm_client.chat_json(assess_claim_messages(claim, evidence_text, metrics_text))
+        messages = assess_claim_messages(
+            claim=claim,
+            primary_evidence_text=primary_evidence_text,
+            metrics_text=metrics_text,
+            peer_evidence_text=peer_evidence_text,
+            verbose=verbose,
+        )
+        assessment = llm_client.chat_json(messages)
         claim_assessments.append(assessment)
 
     overall_assessment = _overall_assessment(claim_assessments)
@@ -175,9 +185,14 @@ def _main() -> None:
     # bank-specific claim primarily against that bank's own filings.
     arg_parser.add_argument("--ticker", default=None, choices=DEFAULT_TICKERS)
     arg_parser.add_argument("--risk-theme", default="consumer_credit")
+    arg_parser.add_argument(
+        "--verbose", action="store_true", help="Also request analyst follow-up questions."
+    )
     args = arg_parser.parse_args()
 
-    result = answer_claim(args.statement, ticker=args.ticker, risk_theme=args.risk_theme)
+    result = answer_claim(
+        args.statement, ticker=args.ticker, risk_theme=args.risk_theme, verbose=args.verbose
+    )
     print(json.dumps(result, indent=2))
 
 
