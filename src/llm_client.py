@@ -1,3 +1,7 @@
+"""Sole gateway to the Mistral SDK: embedding + chat/chat_json calls, with proactive
+rate-limit throttling and retry-with-backoff. Nothing else in the codebase imports
+`mistralai` directly, so a model or provider swap is a one-file change."""
+
 import json
 import time
 
@@ -51,6 +55,9 @@ class LLMClient:
                 sleep_seconds = RETRY_BACKOFF_SECONDS * (2**attempt)
                 print(f"  (retrying after {type(error).__name__}, sleeping {sleep_seconds:.0f}s)")
                 time.sleep(sleep_seconds)
+        # Unreachable: the final attempt either returns or re-raises above. This satisfies
+        # static analysis that every path has an explicit, consistent return.
+        raise RuntimeError("retry loop exited without returning or raising")
 
     def embed(self, texts: list[str]) -> list[list[float]]:
         """Embeds a batch of texts with the configured embedding model."""
