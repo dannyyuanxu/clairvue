@@ -21,20 +21,27 @@ class LLMClient:
         self.embedding_model = settings.EMBEDDING_MODEL
         self.llm_model = settings.LLM_MODEL
 
-    def _complete(self, **kwargs):
+    def _with_retry(self, fn):
         """Throttles to ~1 request/sec proactively, then retries on rate limits
         (429) and transient connection drops with exponential backoff as a
-        fallback -- sequential claim-by-claim workflows can issue many chat
-        calls in quick succession and hit Mistral's rate limit."""
+        fallback -- sequential claim-by-claim workflows (including two-pass
+        peer-context retrieval, which embeds several queries per claim) can
+        issue many API calls in quick succession and hit Mistral's rate or
+        capacity limits. Wraps both chat and embedding calls -- both can hit
+        the same class of transient errors."""
         for attempt in range(MAX_RETRIES):
             try:
-                response = self.client.chat.complete(**kwargs)
+                result = fn()
                 time.sleep(CHAT_RATE_LIMIT_SECONDS)
-                return response
+                return result
             except (SDKError, httpx.RemoteProtocolError, httpx.ConnectError) as error:
-                is_retryable = isinstance(error, (httpx.RemoteProtocolError, httpx.ConnectError)) or (
-                    isinstance(error, SDKError) and error.raw_response.status_code in (429, 500, 502, 503)
+                is_connection_error = isinstance(
+                    error, (httpx.RemoteProtocolError, httpx.ConnectError)
                 )
+                is_retryable_status = isinstance(
+                    error, SDKError
+                ) and error.raw_response.status_code in (429, 500, 502, 503)
+                is_retryable = is_connection_error or is_retryable_status
                 if not is_retryable or attempt == MAX_RETRIES - 1:
                     raise
                 sleep_seconds = RETRY_BACKOFF_SECONDS * (2**attempt)
@@ -43,20 +50,28 @@ class LLMClient:
 
     def embed(self, texts: list[str]) -> list[list[float]]:
         """Embeds a batch of texts with the configured embedding model."""
-        response = self.client.embeddings.create(model=self.embedding_model, inputs=texts)
+        response = self._with_retry(
+            lambda: self.client.embeddings.create(model=self.embedding_model, inputs=texts)
+        )
         return [item.embedding for item in response.data]
 
     def chat(self, messages: list[dict], temperature: float = 0.0) -> str:
         """Free-text chat completion."""
-        response = self._complete(model=self.llm_model, messages=messages, temperature=temperature)
+        response = self._with_retry(
+            lambda: self.client.chat.complete(
+                model=self.llm_model, messages=messages, temperature=temperature
+            )
+        )
         return response.choices[0].message.content
 
     def chat_json(self, messages: list[dict]) -> dict:
         """Chat completion constrained to return valid JSON, pre-parsed into a dict."""
-        response = self._complete(
-            model=self.llm_model,
-            messages=messages,
-            temperature=0.0,
-            response_format={"type": "json_object"},
+        response = self._with_retry(
+            lambda: self.client.chat.complete(
+                model=self.llm_model,
+                messages=messages,
+                temperature=0.0,
+                response_format={"type": "json_object"},
+            )
         )
         return json.loads(response.choices[0].message.content)

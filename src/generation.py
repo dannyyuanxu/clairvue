@@ -148,8 +148,22 @@ def compare_peers(
     return llm_client.chat_json(peer_comparison_messages(question, bank_evidence, metrics_text, tickers))
 
 
-if __name__ == "__main__":
+def _main() -> None:
+    import argparse
     import json
 
-    result = answer_claim("Consumer credit remains resilient and losses are normalizing.")
+    arg_parser = argparse.ArgumentParser()
+    arg_parser.add_argument(
+        "--statement",
+        default="Consumer credit remains resilient and losses are normalizing.",
+    )
+    arg_parser.add_argument("--ticker", default=None, choices=[*DEFAULT_TICKERS, None])
+    arg_parser.add_argument("--risk-theme", default="consumer_credit")
+    args = arg_parser.parse_args()
+
+    result = answer_claim(args.statement, ticker=args.ticker, risk_theme=args.risk_theme)
     print(json.dumps(result, indent=2))
+
+
+if __name__ == "__main__":
+    _main()
