@@ -13,7 +13,7 @@ from src.config import settings
 
 MAX_RETRIES = 5
 RETRY_BACKOFF_SECONDS = 2.0
-CHAT_RATE_LIMIT_SECONDS = 1.0
+CHAT_RATE_LIMIT_SECONDS = 0.1
 
 
 class LLMClient:
