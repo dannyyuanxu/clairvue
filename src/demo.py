@@ -159,12 +159,25 @@ def print_peer_comparison(result: dict) -> None:
     print()
 
 
+def _md_inline(text) -> str:
+    """Escape text for inline Markdown rendering in Colab/Jupyter. A literal '$' otherwise
+    triggers LaTeX math mode -- the source of the garbled italic/merged output where dollar
+    amounts in metrics and filing quotes got swallowed into a math span."""
+    return str(text or "").replace("\\", "\\\\").replace("$", "\\$")
+
+
+def _md_cell(text) -> str:
+    """Escape text for a Markdown table cell: on top of inline escaping, '|' would break the
+    column structure and a newline would break the row."""
+    return _md_inline(text).replace("|", "\\|").replace("\n", " ").strip()
+
+
 def _md_evidence_bullet(item: dict) -> str:
     """One Markdown bullet for a cited evidence item: verbatim quote + source citation."""
-    quote = (item.get("relevant_quote") or item.get("excerpt", "")).strip()
-    company = item.get("company", "")
-    filing_type = item.get("filing_type", "?")
-    period = item.get("period", "?")
+    quote = _md_inline((item.get("relevant_quote") or item.get("excerpt", "")).strip())
+    company = _md_inline(item.get("company", ""))
+    filing_type = _md_inline(item.get("filing_type", "?"))
+    period = _md_inline(item.get("period", "?"))
     return f'- "{quote}" — *{company}, {filing_type} {period}*'
 
 
@@ -175,8 +188,9 @@ def _md_metrics_table(metrics: list[dict]) -> list[str]:
     rows = ["", "| Ticker | Metric | Period | Value | Change |", "|---|---|---|---|---|"]
     for metric in metrics:
         rows.append(
-            f"| {metric.get('ticker', '')} | {metric.get('metric_name', '')} "
-            f"| {metric.get('period', '')} | {metric.get('value', '')} | {metric.get('change', '')} |"
+            f"| {_md_cell(metric.get('ticker', ''))} | {_md_cell(metric.get('metric_name', ''))} "
+            f"| {_md_cell(metric.get('period', ''))} | {_md_cell(metric.get('value', ''))} "
+            f"| {_md_cell(metric.get('change', ''))} |"
         )
     return rows
 
@@ -188,10 +202,11 @@ def claim_assessment_markdown(result: dict, verbose: bool = False) -> str:
     headline), then a compact metrics table, then evidence grouped as Supporting / Watch /
     Contradicting / Peer, plus what's missing. This is where the numeric interpretation the
     model produced actually becomes visible."""
-    overall_emoji, overall_label = ASSESSMENT_MD.get(result["overall_assessment"], ("⚪", result["overall_assessment"]))
+    overall = result["overall_assessment"]
+    overall_emoji, overall_label = ASSESSMENT_MD.get(overall, ("⚪", overall))
     lines = [
         "## Statement assessment",
-        f"> {result['original_statement']}",
+        f"> {_md_inline(result['original_statement'])}",
         "",
         f"**Overall: {overall_emoji} {overall_label}**",
     ]
@@ -199,12 +214,12 @@ def claim_assessment_markdown(result: dict, verbose: bool = False) -> str:
     for claim_assessment in result["claim_assessments"]:
         assessment = claim_assessment.get("assessment", "insufficient_evidence")
         emoji, label = ASSESSMENT_MD.get(assessment, ("⚪", assessment))
-        claim = claim_assessment.get("claim", "")
+        claim = _md_inline(claim_assessment.get("claim", ""))
         lines += ["", "---", f"### {emoji} {claim}", f"**{label}**"]
 
         rationale = claim_assessment.get("rationale", "").strip()
         if rationale:
-            lines += ["", rationale]
+            lines += ["", _md_inline(rationale)]
 
         lines += _md_metrics_table(claim_assessment.get("relevant_metrics", []))
 
@@ -220,10 +235,11 @@ def claim_assessment_markdown(result: dict, verbose: bool = False) -> str:
 
         missing = claim_assessment.get("missing_information", [])
         if missing:
-            lines += ["", "**Missing**", *[f"- {item}" for item in missing]]
+            lines += ["", "**Missing**", *[f"- {_md_inline(item)}" for item in missing]]
 
-        if verbose and claim_assessment.get("analyst_follow_up_questions"):
-            lines += ["", "**Follow-up questions**", *[f"- {q}" for q in claim_assessment["analyst_follow_up_questions"]]]
+        follow_ups = claim_assessment.get("analyst_follow_up_questions") if verbose else None
+        if follow_ups:
+            lines += ["", "**Follow-up questions**", *[f"- {_md_inline(q)}" for q in follow_ups]]
 
     return "\n".join(lines)
 
@@ -241,30 +257,33 @@ def display_claim_assessment(result: dict, verbose: bool = False) -> None:
 
 def peer_comparison_markdown(result: dict) -> str:
     """Render a compare_peers() result as Markdown -- the notebook-friendly view."""
-    lines = ["## Peer comparison", f"> {result.get('question', '')}", ""]
+    lines = ["## Peer comparison", f"> {_md_inline(result.get('question', ''))}", ""]
 
     for bank in result.get("bank_assessments", []):
         direction = bank.get("risk_direction", "unclear")
         emoji, label = RISK_DIRECTION_MD.get(direction, ("⚪", direction))
+        ticker = _md_inline(bank.get("ticker", ""))
+        company = _md_inline(bank.get("company", ""))
         lines += [
             "---",
-            f"### {bank.get('ticker', '')} — {bank.get('company', '')} {emoji} {label}",
-            bank.get("summary", ""),
+            f"### {ticker} — {company} {emoji} {label}",
+            _md_inline(bank.get("summary", "")),
         ]
         if bank.get("metrics_summary"):
-            lines += ["", f"*Metrics:* {bank['metrics_summary']}"]
+            lines += ["", f"*Metrics:* {_md_inline(bank['metrics_summary'])}"]
         excerpts = bank.get("evidence_excerpts", [])
         if excerpts:
-            lines += ["", "**Evidence**", *[f"- {excerpt}" for excerpt in excerpts]]
+            lines += ["", "**Evidence**", *[f"- {_md_inline(excerpt)}" for excerpt in excerpts]]
         lines.append("")
 
-    if result.get("strongest_deterioration_signal"):
-        lines += ["---", f"**Strongest deterioration signal:** {result['strongest_deterioration_signal']}", ""]
+    signal = result.get("strongest_deterioration_signal")
+    if signal:
+        lines += ["---", f"**Strongest deterioration signal:** {_md_inline(signal)}", ""]
     if result.get("overall_summary"):
-        lines += [f"**Overall:** {result['overall_summary']}", ""]
+        lines += [f"**Overall:** {_md_inline(result['overall_summary'])}", ""]
     limitations = result.get("comparability_limitations", [])
     if limitations:
-        lines += ["**Comparability limitations**", *[f"- {limitation}" for limitation in limitations]]
+        lines += ["**Comparability limitations**", *[f"- {_md_inline(lim)}" for lim in limitations]]
     return "\n".join(lines)
 
 
