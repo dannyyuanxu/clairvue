@@ -1,0 +1,1149 @@
+{
+  "demo_1": {
+    "original_statement": "Consumer credit remains resilient, and losses are normalizing in line with expectations.",
+    "atomic_claims": [
+      "Consumer credit default rates are within expected historical ranges.",
+      "Consumer credit loss rates are declining toward pre-pandemic levels.",
+      "Consumer credit delinquency rates are stable or improving.",
+      "Consumer credit growth is positive and sustainable.",
+      "Consumer credit provisioning levels align with normalized loss expectations."
+    ],
+    "overall_assessment": "partially_supported",
+    "claim_assessments": [
+      {
+        "claim": "Consumer credit default rates are within expected historical ranges.",
+        "assessment": "insufficient_evidence",
+        "rationale": "The provided evidence does not include direct metrics on consumer credit default rates or historical ranges. The formal disclosures (10-Q, 10-K) only report counts of defaults for modified consumer loans, which are not representative of overall default rates. The management commentary references consumer resilience but does not provide quantitative default rate data or historical comparisons. The XBRL metrics (allowance for credit losses, net charge-offs, provision for credit losses, total loans) are for JPM, BAC, and C but do not include default rate calculations or historical ranges for Citigroup specifically.",
+        "supporting_evidence": [],
+        "qualifying_evidence": [],
+        "contradictory_evidence": [],
+        "relevant_metrics": [],
+        "missing_information": [
+          "Historical default rate ranges for Citigroup's consumer credit portfolio.",
+          "Current default rate metrics for Citigroup's consumer credit portfolio (e.g., default rate as a percentage of total loans).",
+          "Comparable historical default rate data for Citigroup or peer banks.",
+          "Definition of 'expected historical ranges' used by management (e.g., specific time period or benchmark)."
+        ],
+        "analyst_follow_up_questions": [
+          "Can you provide Citigroup's consumer credit default rate (e.g., as a percentage of total consumer loans) for the relevant periods?",
+          "What historical time period or benchmark is being used to define 'expected historical ranges'?",
+          "Are there any formal disclosures (e.g., 10-K MD&A) that include historical default rate comparisons or ranges?",
+          "Can you provide peer bank default rate data for comparison?"
+        ]
+      },
+      {
+        "claim": "Consumer credit loss rates are declining toward pre-pandemic levels.",
+        "assessment": "partially_supported",
+        "rationale": "Management commentary from Bank of America (BAC) and JPMorgan Chase (JPM) indicates that consumer credit loss rates (e.g., net charge-offs) remain below pre-pandemic levels (Q4 2019) and are transitioning from historic lows to pre-pandemic norms. However, formal disclosures (SEC filings) show that net charge-offs have increased year-over-year for all three banks (JPM, BAC, C) in recent quarters, indicating a deterioration in credit quality relative to prior periods. The claim is partially supported because while loss rates are still below pre-pandemic peaks, they are rising and not yet fully normalized.",
+        "supporting_evidence": [
+          {
+            "company": "Bank of America",
+            "source_type": "management_commentary",
+            "filing_type": "earnings_call",
+            "period": "2023-01-13",
+            "section": "",
+            "excerpt": "Credit card charge-offs increased in Quarter 4 as a result of the flow through of modest increase in last quarter's late-stage delinquencies. This should continue as we transition off the historic lows in delinquencies to still very low pre-pandemic levels...."
+          },
+          {
+            "company": "Bank of America",
+            "source_type": "management_commentary",
+            "filing_type": "earnings_call",
+            "period": "2023-07-18",
+            "section": "",
+            "excerpt": "If you look at our charge-offs, for example, that's mainly about loan growth and a little bit about the rate picking up just a little bit. But it's still well below pandemic. Fourth quarter '19 was a great quarter for asset quality and cards. So it gets back to this idea that the consumer is still in a pretty healthy place...."
+          },
+          {
+            "company": "Bank of America",
+            "source_type": "management_commentary",
+            "filing_type": "earnings_call",
+            "period": "2023-10-17",
+            "section": "",
+            "excerpt": "Most of the net charge-off increase over time has been really due to card and consumer card. And the charge-offs at this point are still lower than they were in the fourth quarter of '19, which was a stellar period. And I'd anticipate in the short term that you'd see things begin to -- or just continue that trend...."
+          },
+          {
+            "company": "JPMorgan Chase",
+            "source_type": "management_commentary",
+            "filing_type": "earnings_call",
+            "period": "2023-07-14",
+            "section": "",
+            "excerpt": "I mean, to us, I think we still see this as a normalization, not a deterioration story when we talk about consumer credit. Actually, revolve per account has still not gotten to pre-pandemic levels actually...."
+          }
+        ],
+        "qualifying_evidence": [
+          {
+            "company": "Bank of America",
+            "source_type": "formal_disclosure",
+            "filing_type": "10-K",
+            "period": "2022-Q4",
+            "section": "Balance Sheet Overview",
+            "excerpt": "Net charge-offs as a percentage of average loans and leases outstanding: 0.21% (2022-Q4), 0.25% (2021-Q4), 0.42% (2020-Q4)."
+          }
+        ],
+        "contradictory_evidence": [
+          {
+            "company": "JPMorgan Chase",
+            "source_type": "formal_disclosure",
+            "filing_type": "SEC companyfacts API",
+            "period": "2023-Q4",
+            "section": "XBRL Metrics",
+            "excerpt": "Net charge-offs: $6.21B (YoY +117.6% from 2022-Q4)."
+          },
+          {
+            "company": "Bank of America",
+            "source_type": "formal_disclosure",
+            "filing_type": "SEC companyfacts API",
+            "period": "2023-Q4",
+            "section": "XBRL Metrics",
+            "excerpt": "Net charge-offs: $3.80B (YoY +74.9% from 2022-Q4)."
+          },
+          {
+            "company": "Citigroup",
+            "source_type": "formal_disclosure",
+            "filing_type": "SEC companyfacts API",
+            "period": "2024-Q1",
+            "section": "XBRL Metrics",
+            "excerpt": "Net charge-offs: $2.30B (YoY +39.4% from 2023-Q1)."
+          }
+        ],
+        "relevant_metrics": [
+          {
+            "ticker": "JPM",
+            "metric_name": "net_charge_offs",
+            "period": "2023-Q4",
+            "value": "$6.21B",
+            "change": "YoY +117.6%"
+          },
+          {
+            "ticker": "BAC",
+            "metric_name": "net_charge_offs",
+            "period": "2023-Q4",
+            "value": "$3.80B",
+            "change": "YoY +74.9%"
+          },
+          {
+            "ticker": "C",
+            "metric_name": "net_charge_offs",
+            "period": "2024-Q1",
+            "value": "$2.30B",
+            "change": "YoY +39.4%"
+          },
+          {
+            "ticker": "JPM",
+            "metric_name": "net_charge_offs",
+            "period": "2022-Q4",
+            "value": "$2.85B",
+            "change": "YoY baseline"
+          },
+          {
+            "ticker": "BAC",
+            "metric_name": "net_charge_offs",
+            "period": "2022-Q4",
+            "value": "$2.17B",
+            "change": "YoY baseline"
+          }
+        ],
+        "missing_information": [
+          "No formal disclosures explicitly state that consumer credit loss rates are 'declining toward pre-pandemic levels.' The claim is inferred from management commentary and partial metrics.",
+          "No pre-pandemic (2019) net charge-off data is provided in the evidence for direct comparison.",
+          "No formal disclosures quantify the 'distance' from pre-pandemic levels in terms of loss rates or delinquency metrics."
+        ],
+        "analyst_follow_up_questions": [
+          "Can you provide formal disclosures (e.g., 10-K/10-Q) with explicit comparisons of 2023-2024 consumer credit loss rates to pre-pandemic (2019) levels?",
+          "Are there any formal disclosures from JPMorgan Chase or Citigroup that directly address the normalization of consumer credit loss rates toward pre-pandemic levels?",
+          "Can you provide delinquency rate trends (e.g., 30/60/90-day delinquencies) for 2019 vs. 2023-2024 to validate the 'normalization' narrative?",
+          "Are there any forward-looking statements in formal filings (e.g., MD&A) about expected consumer credit loss rate trends over the next 12-24 months?"
+        ]
+      },
+      {
+        "claim": "Consumer credit delinquency rates are stable or improving.",
+        "assessment": "partially_supported",
+        "rationale": "Formal disclosures from Citigroup and Bank of America provide delinquency ratios that show mixed trends. Citigroup's retail banking delinquency ratio decreased from 2.12% (2023-Q3) to 1.53% (2024-Q1), suggesting improvement, while retail services delinquency ratios fluctuated. Bank of America's management commentary indicates delinquencies are transitioning from historic lows to pre-pandemic levels, implying stability but not necessarily improvement. However, JPMorgan Chase's net charge-offs increased significantly (YoY +117.6% in 2023-Q4), which may indicate rising delinquencies or credit deterioration. The evidence is insufficient to conclusively state that delinquency rates are stable or improving across all consumer credit segments.",
+        "supporting_evidence": [
+          {
+            "company": "Citigroup",
+            "source_type": "formal_disclosure",
+            "filing_type": "10-Q",
+            "period": "2023-Q3",
+            "section": "Consumer Loan Delinquencies Amounts and Ratios",
+            "excerpt": "Ratio for Retail banking: 2.12% (2023-Q3)"
+          },
+          {
+            "company": "Citigroup",
+            "source_type": "formal_disclosure",
+            "filing_type": "10-Q",
+            "period": "2024-Q1",
+            "section": "Consumer Loan Delinquencies Amounts and Ratios",
+            "excerpt": "Ratio for Retail banking: 1.53% (2024-Q1)"
+          },
+          {
+            "company": "Bank of America",
+            "source_type": "management_commentary",
+            "filing_type": null,
+            "period": "2023-01-13",
+            "section": null,
+            "excerpt": "Credit card charge-offs increased in Quarter 4 as a result of the flow through of modest increase in last quarter's late-stage delinquencies. This should continue as we transition off the historic lows in delinquencies to still very low pre-pandemic levels."
+          },
+          {
+            "company": "Bank of America",
+            "source_type": "management_commentary",
+            "filing_type": null,
+            "period": "2023-07-18",
+            "section": null,
+            "excerpt": "If you look at our charge-offs, for example, that's mainly about loan growth and a little bit about the rate picking up just a little bit. But it's still well below pandemic. Fourth quarter '19 was a great quarter for asset quality and cards."
+          }
+        ],
+        "qualifying_evidence": [
+          {
+            "company": "Citigroup",
+            "source_type": "formal_disclosure",
+            "filing_type": "10-Q",
+            "period": "2023-Q3",
+            "section": "Consumer Loan Delinquencies Amounts and Ratios",
+            "excerpt": "Ratio for Retail services: 50.5% (2023-Q3)"
+          },
+          {
+            "company": "Citigroup",
+            "source_type": "formal_disclosure",
+            "filing_type": "10-Q",
+            "period": "2024-Q1",
+            "section": "Consumer Loan Delinquencies Amounts and Ratios",
+            "excerpt": "Ratio for Retail services: 43.1% (2024-Q1)"
+          }
+        ],
+        "contradictory_evidence": [
+          {
+            "company": "JPMorgan Chase",
+            "source_type": "formal_disclosure",
+            "filing_type": "10-K",
+            "period": "2023-Q4",
+            "section": "Consumer, excluding credit card loan portfolio",
+            "excerpt": "No direct delinquency rate data provided in the excerpt."
+          },
+          {
+            "company": "JPMorgan Chase",
+            "source_type": "formal_disclosure",
+            "filing_type": "XBRL",
+            "period": "2023-Q4",
+            "section": "SEC companyfacts API",
+            "excerpt": "Net charge-offs: $6.21B (YoY +117.6%)"
+          }
+        ],
+        "relevant_metrics": [
+          {
+            "ticker": "JPM",
+            "metric_name": "net_charge_offs",
+            "period": "2023-Q4",
+            "value": "$6.21B",
+            "change": "YoY +117.6%"
+          },
+          {
+            "ticker": "BAC",
+            "metric_name": "net_charge_offs",
+            "period": "2023-Q4",
+            "value": "$3.80B",
+            "change": "YoY +74.9%"
+          },
+          {
+            "ticker": "C",
+            "metric_name": "net_charge_offs",
+            "period": "2023-Q4",
+            "value": "Not explicitly stated in XBRL metrics",
+            "change": "Not explicitly stated in XBRL metrics"
+          },
+          {
+            "ticker": "C",
+            "metric_name": "allowance_for_credit_losses",
+            "period": "2023-Q4",
+            "value": "$18.14B",
+            "change": "YoY +6.9%"
+          }
+        ],
+        "missing_information": [
+          "No direct delinquency rate data for JPMorgan Chase in the provided excerpts.",
+          "No delinquency rate data for Citigroup's retail services segment in the provided excerpts.",
+          "No delinquency rate data for Bank of America in formal disclosures (only management commentary provided).",
+          "No standardized delinquency rate definitions across companies (e.g., 30-89 days vs. 90+ days past due)."
+        ],
+        "analyst_follow_up_questions": [
+          "What are the specific delinquency rate definitions used by each company (e.g., 30-89 days vs. 90+ days past due)?",
+          "Are there any trends in delinquency rates for specific loan types (e.g., mortgages, auto loans, credit cards) within each company?",
+          "What is the composition of the consumer credit portfolio for each company (e.g., % mortgages, % credit cards, % auto loans)?",
+          "Are there any regional or demographic breakdowns of delinquency rates that could explain the observed trends?",
+          "What is the correlation between net charge-offs and delinquency rates for each company?"
+        ]
+      },
+      {
+        "claim": "Consumer credit growth is positive and sustainable.",
+        "assessment": "partially_supported",
+        "rationale": "Management statements (JPMorgan Chase, Citigroup) indicate positive consumer spending and resilience, with some caution around lower FICO segments. However, formal disclosures (SEC filings) show mixed signals: total loans are growing YoY for JPMorgan Chase (+17.6% YoY in 2023-Q4) and Citigroup (+4.8% YoY in 2023-Q4), but Bank of America's total loans grew only +0.7% YoY in 2023-Q4. Net charge-offs and provisions for credit losses have increased significantly YoY across all three banks, indicating rising credit risk and potential unsustainability in growth. The term 'sustainable' is not directly supported by the evidence.",
+        "supporting_evidence": [
+          {
+            "company": "JPMorgan Chase",
+            "source_type": "management_commentary",
+            "filing_type": "management_statement",
+            "period": "2023-04-14",
+            "section": "",
+            "excerpt": "In Consumer & Community Banking, consumer spending remained healthy with combined debit and credit card sales up 10% and card loans up 21%. The U.S. economy continues to be on generally healthy footings -- consumers are still spending and have strong balance sheets, and businesses are in good shape...."
+          },
+          {
+            "company": "Citigroup",
+            "source_type": "management_commentary",
+            "filing_type": "management_statement",
+            "period": "2023-07-14",
+            "section": "",
+            "excerpt": "We see the U.S. consumer as resilient. We've talked about them being cautious, but they're not recessionary. And we are seeing more pressure on the lower FICOs. We don't have a large number of that in our portfolio. That is where we're seeing more of the normalization happening on the payment rates, for example, and other behaviors in there. So it's quite localized, but I don't think we should be overly concerned here about the health of the U.S. consumer...."
+          }
+        ],
+        "qualifying_evidence": [
+          {
+            "company": "JPMorgan Chase",
+            "source_type": "formal_disclosure",
+            "filing_type": "10-K",
+            "period": "2023-Q4",
+            "section": "Consumer, excluding credit card loan portfolio",
+            "excerpt": "Consumer loans, excluding credit card loans, consist primarily of scored residential mortgages, home equity loans and lines of credit, auto and business banking loans, with a focus on serving the prime consumer credit market."
+          },
+          {
+            "company": "Bank of America",
+            "source_type": "formal_disclosure",
+            "filing_type": "10-K",
+            "period": "2023-Q4",
+            "section": "Credit Card and Other Consumer",
+            "excerpt": "Credit Card and Other Consumer | (Dollars in millions) | December 31, 2022 | ... | Credit card | ... | $284 | ... | $293 | ... | 22.34% | ... | 3.89% | ... |"
+          }
+        ],
+        "contradictory_evidence": [
+          {
+            "company": "JPMorgan Chase",
+            "source_type": "formal_disclosure",
+            "filing_type": "SEC companyfacts API",
+            "period": "2023-Q4",
+            "section": "XBRL metrics",
+            "excerpt": "net_charge_offs: $6.21B (YoY +117.6%)"
+          },
+          {
+            "company": "Bank of America",
+            "source_type": "formal_disclosure",
+            "filing_type": "SEC companyfacts API",
+            "period": "2023-Q4",
+            "section": "XBRL metrics",
+            "excerpt": "net_charge_offs: $3.80B (YoY +74.9%)"
+          },
+          {
+            "company": "Citigroup",
+            "source_type": "formal_disclosure",
+            "filing_type": "SEC companyfacts API",
+            "period": "2023-Q4",
+            "section": "XBRL metrics",
+            "excerpt": "net_charge_offs: $7.79B (YoY +64.1%)"
+          },
+          {
+            "company": "Bank of America",
+            "source_type": "formal_disclosure",
+            "filing_type": "SEC companyfacts API",
+            "period": "2023-Q4",
+            "section": "XBRL metrics",
+            "excerpt": "total_loans: $1040.39B (YoY +0.7%)"
+          }
+        ],
+        "relevant_metrics": [
+          {
+            "ticker": "JPM",
+            "metric_name": "total_loans",
+            "period": "2023-Q4",
+            "value": "1258.45B",
+            "change": "YoY +17.6%"
+          },
+          {
+            "ticker": "BAC",
+            "metric_name": "total_loans",
+            "period": "2023-Q4",
+            "value": "1040.39B",
+            "change": "YoY +0.7%"
+          },
+          {
+            "ticker": "C",
+            "metric_name": "total_loans",
+            "period": "2023-Q4",
+            "value": "671.22B",
+            "change": "YoY +4.8%"
+          },
+          {
+            "ticker": "JPM",
+            "metric_name": "net_charge_offs",
+            "period": "2023-Q4",
+            "value": "6.21B",
+            "change": "YoY +117.6%"
+          },
+          {
+            "ticker": "BAC",
+            "metric_name": "net_charge_offs",
+            "period": "2023-Q4",
+            "value": "3.80B",
+            "change": "YoY +74.9%"
+          },
+          {
+            "ticker": "C",
+            "metric_name": "net_charge_offs",
+            "period": "2023-Q4",
+            "value": "7.79B",
+            "change": "YoY +64.1%"
+          }
+        ],
+        "missing_information": [
+          "No direct evidence on the sustainability of consumer credit growth beyond YoY changes in charge-offs and provisions.",
+          "No granular breakdown of consumer credit growth by segment (e.g., prime vs. subprime) to assess sustainability.",
+          "No forward-looking statements or macroeconomic context (e.g., unemployment rates, GDP growth) to evaluate sustainability."
+        ],
+        "analyst_follow_up_questions": [
+          "What is the composition of consumer credit growth by credit quality segment (e.g., FICO bands) for each bank?",
+          "Are there any qualitative disclosures in the 10-Ks about the drivers of increased charge-offs and provisions?",
+          "What are the macroeconomic assumptions (e.g., unemployment, GDP) underlying the banks' credit loss projections?",
+          "Are there any regulatory or policy changes (e.g., interest rate hikes, credit card regulations) that could impact the sustainability of consumer credit growth?",
+          "What is the trend in delinquency rates for consumer loans across the banks?"
+        ]
+      },
+      {
+        "claim": "Consumer credit provisioning levels align with normalized loss expectations.",
+        "assessment": "partially_supported",
+        "rationale": "The claim suggests alignment between provisioning levels and normalized loss expectations, but the evidence shows significant volatility in provisioning and net charge-offs, particularly in 2023, which does not clearly indicate normalization. While allowance for credit losses has generally increased YoY, net charge-offs and provisions have shown sharp increases in certain periods (e.g., JPMorgan Chase's net charge-offs increased 117.6% YoY in Q4 2023), suggesting elevated loss expectations rather than normalization. The formal disclosures attribute provisioning increases to factors like credit card loan growth and asset quality deterioration, which are not indicative of normalized conditions.",
+        "supporting_evidence": [
+          {
+            "company": "Bank of America",
+            "source_type": "formal_disclosure",
+            "filing_type": "10-Q",
+            "period": "2023-Q1",
+            "section": "Provision for Credit Losses",
+            "excerpt": "The provision for credit losses increased $901 million to $931 million for the three months ended March 31, 2023 compared to the same period in 2022. The provision for credit losses for the current-year period was driven by our consumer portfolio primarily due to higher-than-expected credit card balances, partially offset by certain improved macroeconomic conditions that primarily benefited our commercial portfolio."
+          },
+          {
+            "company": "Bank of America",
+            "source_type": "formal_disclosure",
+            "filing_type": "10-K",
+            "period": "2023-Q4",
+            "section": "Credit Card and Other Consumer",
+            "excerpt": "The scenarios that are chosen each quarter and the weighting given to each scenario depend on a variety of factors including recent economic events, leading economic indicators, internal and third-party economist views, and industry trends."
+          }
+        ],
+        "qualifying_evidence": [
+          {
+            "company": "JPMorgan Chase",
+            "source_type": "formal_disclosure",
+            "filing_type": "10-K",
+            "period": "2023-Q4",
+            "section": "CONSOLIDATED RESULTS OF OPERATIONS",
+            "excerpt": "Provision for credit losses for 2023 was $9.32B, a YoY increase of 45.9%."
+          },
+          {
+            "company": "Bank of America",
+            "source_type": "formal_disclosure",
+            "filing_type": "10-K",
+            "period": "2023-Q4",
+            "section": "Provision for Credit Losses",
+            "excerpt": "The provision for credit losses increased $1.9 billion to $4.4 billion in 2023 compared to 2022."
+          }
+        ],
+        "contradictory_evidence": [
+          {
+            "company": "JPMorgan Chase",
+            "source_type": "formal_disclosure",
+            "filing_type": "SEC companyfacts API",
+            "period": "2023-Q4",
+            "section": "Metrics",
+            "excerpt": "Net charge-offs: $6.21B (YoY +117.6%), Provision for credit losses: $9.32B (YoY +45.9%)."
+          },
+          {
+            "company": "Bank of America",
+            "source_type": "formal_disclosure",
+            "filing_type": "SEC companyfacts API",
+            "period": "2023-Q4",
+            "section": "Metrics",
+            "excerpt": "Net charge-offs: $3.80B (YoY +74.9%), Provision for credit losses: $4.72B (YoY +92.1%)."
+          }
+        ],
+        "relevant_metrics": [
+          {
+            "ticker": "JPM",
+            "metric_name": "provision_for_credit_losses",
+            "period": "2023-Q4",
+            "value": "$9.32B",
+            "change": "YoY +45.9%"
+          },
+          {
+            "ticker": "JPM",
+            "metric_name": "net_charge_offs",
+            "period": "2023-Q4",
+            "value": "$6.21B",
+            "change": "YoY +117.6%"
+          },
+          {
+            "ticker": "JPM",
+            "metric_name": "allowance_for_credit_losses",
+            "period": "2023-Q4",
+            "value": "$22.42B",
+            "change": "YoY +13.7%"
+          },
+          {
+            "ticker": "BAC",
+            "metric_name": "provision_for_credit_losses",
+            "period": "2023-Q4",
+            "value": "$4.72B",
+            "change": "YoY +92.1%"
+          },
+          {
+            "ticker": "BAC",
+            "metric_name": "net_charge_offs",
+            "period": "2023-Q4",
+            "value": "$3.80B",
+            "change": "YoY +74.9%"
+          },
+          {
+            "ticker": "BAC",
+            "metric_name": "allowance_for_credit_losses",
+            "period": "2023-Q4",
+            "value": "$13.34B",
+            "change": "YoY +5.2%"
+          }
+        ],
+        "missing_information": [
+          "No explicit disclosure or metric indicating 'normalized loss expectations' or a benchmark for what constitutes normalized levels.",
+          "No direct comparison of provisioning levels to historical normalized periods or industry benchmarks.",
+          "No evidence of management's definition of 'normalized loss expectations' or how they align provisioning to it."
+        ],
+        "analyst_follow_up_questions": [
+          "What is the company's definition of 'normalized loss expectations' and how is it calculated?",
+          "Are there historical benchmarks or industry standards used to assess alignment with normalized loss expectations?",
+          "Provide a breakdown of provisioning drivers (e.g., macroeconomic scenarios, loan growth, asset quality) and how they compare to normalized expectations.",
+          "Are there any forward-looking statements or disclosures in management commentary that define 'normalized' conditions?",
+          "How do the current provisioning levels compare to pre-pandemic (e.g., 2019) levels in terms of percentage of loans or other normalized metrics?"
+        ]
+      }
+    ],
+    "limitations": [
+      "Assessment based on available SEC filings and curated metrics only. This is not investment advice."
+    ],
+    "confidence": 0.52
+  },
+  "demo_2": {
+    "risk_theme": "consumer-credit pressure",
+    "question": "Which of JPMorgan, Bank of America, and Citigroup shows the strongest evidence of increasing consumer-credit pressure in 2023?",
+    "bank_assessments": [
+      {
+        "company": "JPMorgan Chase",
+        "ticker": "JPM",
+        "summary": "JPMorgan exhibits the most pronounced deterioration in consumer credit metrics in 2023, with significant increases in net charge-offs, provision for credit losses, and allowance for credit losses. The YoY increase in net charge-offs (117.6%) and provision for credit losses (45.9%) in 2023-Q4 are particularly notable, indicating rising credit stress.",
+        "evidence_excerpts": [
+          "Net charge-offs increased to $6.21B in 2023-Q4, up 117.6% YoY (SEC companyfacts API, JPM 2023-Q4).",
+          "Provision for credit losses rose to $9.32B in 2023-Q4, up 45.9% YoY (SEC companyfacts API, JPM 2023-Q4).",
+          "Allowance for credit losses grew to $22.42B in 2023-Q4, up 13.7% YoY (SEC companyfacts API, JPM 2023-Q4).",
+          "Loans increased YoY by 17.6% in 2023-Q4, driven by residential real estate and auto loans (JPMorgan Chase 10-K 2023-Q4, Section: Consumer, excluding credit card)."
+        ],
+        "metrics_summary": "Net charge-offs: +117.6% YoY (2023-Q4); Provision for credit losses: +45.9% YoY (2023-Q4); Allowance for credit losses: +13.7% YoY (2023-Q4); Total loans: +17.6% YoY (2023-Q4).",
+        "risk_direction": "deteriorating"
+      },
+      {
+        "company": "Bank of America",
+        "ticker": "BAC",
+        "summary": "Bank of America shows evidence of increasing consumer-credit pressure, with notable increases in net charge-offs and provision for credit losses in 2023. However, the magnitude of deterioration is less severe than JPMorgan's, with smaller YoY increases in key metrics.",
+        "evidence_excerpts": [
+          "Net charge-offs increased to $3.80B in 2023-Q4, up 74.9% YoY (SEC companyfacts API, BAC 2023-Q4).",
+          "Provision for credit losses rose to $4.72B in 2023-Q4, up 92.1% YoY (SEC companyfacts API, BAC 2023-Q4).",
+          "Allowance for credit losses grew to $13.34B in 2023-Q4, up 5.2% YoY (SEC companyfacts API, BAC 2023-Q4).",
+          "Total loans remained relatively stable, with only a 0.7% YoY increase in 2023-Q4 (SEC companyfacts API, BAC 2023-Q4).",
+          "Provision for credit losses driven by credit card loan growth and asset quality deterioration (Bank of America 10-Q 2023-Q3, Section: Credit Card and Other Consumer)."
+        ],
+        "metrics_summary": "Net charge-offs: +74.9% YoY (2023-Q4); Provision for credit losses: +92.1% YoY (2023-Q4); Allowance for credit losses: +5.2% YoY (2023-Q4); Total loans: +0.7% YoY (2023-Q4).",
+        "risk_direction": "deteriorating"
+      },
+      {
+        "company": "Citigroup",
+        "ticker": "C",
+        "summary": "Citigroup shows signs of increasing consumer-credit pressure, with rising net charge-offs and provision for credit losses in 2023. However, the increases are less pronounced than JPMorgan's and Bank of America's, and total loans grew at a slower pace.",
+        "evidence_excerpts": [
+          "Net charge-offs increased to $1.64B in 2023-Q3 (latest available), with a YoY increase implied by the trend (SEC companyfacts API, C 2023-Q3).",
+          "Provision for credit losses rose to $7.79B in 2023-Q4, up 64.1% YoY (SEC companyfacts API, C 2023-Q4).",
+          "Allowance for credit losses grew to $18.14B in 2023-Q4, up 6.9% YoY (SEC companyfacts API, C 2023-Q4).",
+          "Total loans increased by 4.8% YoY in 2023-Q4 (SEC companyfacts API, C 2023-Q4).",
+          "Net credit losses in cards expected to reach pre-pandemic levels by end of 2023 (Citigroup 10-Q 2023-Q3, Section: AND RESULTS OF OPERATIONS)."
+        ],
+        "metrics_summary": "Net charge-offs: +trend increase (latest: $1.64B in 2023-Q3); Provision for credit losses: +64.1% YoY (2023-Q4); Allowance for credit losses: +6.9% YoY (2023-Q4); Total loans: +4.8% YoY (2023-Q4).",
+        "risk_direction": "deteriorating"
+      }
+    ],
+    "strongest_deterioration_signal": "JPMorgan Chase (JPM) shows the strongest evidence of increasing consumer-credit pressure in 2023, with the highest YoY increases in net charge-offs (+117.6%) and provision for credit losses (+45.9%) in 2023-Q4, alongside a significant rise in allowance for credit losses (+13.7%).",
+    "comparability_limitations": [
+      "Differing fiscal periods for some metrics (e.g., Citigroup's net charge-offs are only available through 2023-Q3, while JPMorgan and Bank of America provide data through 2023-Q4).",
+      "Variations in the authority and granularity of evidence: JPMorgan and Bank of America provide more detailed qualitative disclosures (e.g., sections on consumer credit portfolio and credit card performance), while Citigroup's disclosures are more limited in scope.",
+      "Differences in portfolio composition: JPMorgan's total loans include a significant increase due to the acquisition of First Republic, which may skew credit risk metrics. Bank of America and Citigroup do not report such acquisitions in 2023.",
+      "XBRL metrics may not fully align with qualitative disclosures (e.g., JPMorgan's 10-K 2023-Q4 mentions loan growth but does not explicitly tie it to credit quality deterioration)."
+    ],
+    "overall_summary": "All three banks show evidence of increasing consumer-credit pressure in 2023, with JPMorgan exhibiting the most pronounced deterioration in key metrics (net charge-offs, provision for credit losses, and allowance for credit losses). Bank of America and Citigroup also show signs of pressure but to a lesser extent. The comparability of metrics is limited by differences in portfolio composition, fiscal periods, and the granularity of disclosures.",
+    "analyst_follow_up_questions": [
+      "Can additional qualitative disclosures (e.g., delinquency rates, loan modifications, or credit score distributions) be provided for Citigroup to better assess consumer-credit pressure?",
+      "Are the YoY increases in JPMorgan's total loans (17.6% in 2023-Q4) primarily driven by organic growth or acquisitions (e.g., First Republic)? If acquisitions, can the impact on credit risk metrics be isolated?",
+      "Can Bank of America provide more granular data on credit card performance (e.g., delinquency rates, charge-off rates) for 2023 to better contextualize the provision for credit losses?",
+      "Are there any material differences in the definition or calculation of 'net charge-offs' or 'provision for credit losses' between the banks that could affect comparability?",
+      "Can Citigroup provide updated net charge-off data for 2023-Q4 to align with the other banks' reporting periods?"
+    ]
+  },
+  "demo_3": {
+    "original_statement": "Does the evidence prove that consumer credit losses have peaked and will improve from here?",
+    "atomic_claims": [
+      "Consumer credit losses in the current period are at their highest observed level compared to prior periods.",
+      "Consumer credit losses are projected to decrease in the next reporting period based on available data.",
+      "Historical trends indicate that consumer credit losses typically follow a cyclical pattern with identifiable peaks.",
+      "Current economic indicators (e.g., unemployment rate, GDP growth) support the claim that consumer credit losses have peaked.",
+      "Independent credit risk models or third-party analyses confirm that consumer credit losses have reached a peak."
+    ],
+    "overall_assessment": "partially_supported",
+    "claim_assessments": [
+      {
+        "claim": "Consumer credit losses in the current period are at their highest observed level compared to prior periods.",
+        "assessment": "partially_supported",
+        "rationale": "The claim is partially supported by the evidence, as net charge-offs and provisions for credit losses for Bank of America and JPMorgan Chase show significant increases in certain periods (e.g., JPMorgan Chase's net charge-offs in 2023-Q4 and 2024-Q1, Bank of America's net charge-offs in 2023-Q4 and 2024-Q1). However, the evidence does not explicitly confirm that the 'current period' (unspecified in the claim) is the highest observed level across all prior periods for all companies. The data provided is limited to specific quarters and does not cover a comprehensive historical comparison for all entities.",
+        "supporting_evidence": [
+          {
+            "company": "JPMorgan Chase",
+            "source_type": "formal_disclosure",
+            "filing_type": "XBRL_metrics",
+            "period": "2023-Q4",
+            "section": "net_charge_offs",
+            "excerpt": "net_charge_offs: $6.21B (YoY +117.6%)"
+          },
+          {
+            "company": "JPMorgan Chase",
+            "source_type": "formal_disclosure",
+            "filing_type": "XBRL_metrics",
+            "period": "2024-Q1",
+            "section": "net_charge_offs",
+            "excerpt": "net_charge_offs: $1.96B (YoY +72.0%)"
+          },
+          {
+            "company": "Bank of America",
+            "source_type": "formal_disclosure",
+            "filing_type": "XBRL_metrics",
+            "period": "2023-Q4",
+            "section": "net_charge_offs",
+            "excerpt": "net_charge_offs: $3.80B (YoY +74.9%)"
+          },
+          {
+            "company": "Bank of America",
+            "source_type": "formal_disclosure",
+            "filing_type": "XBRL_metrics",
+            "period": "2024-Q1",
+            "section": "net_charge_offs",
+            "excerpt": "net_charge_offs: $1.50B (YoY +85.6%)"
+          }
+        ],
+        "qualifying_evidence": [
+          {
+            "company": "Citigroup",
+            "source_type": "formal_disclosure",
+            "filing_type": "XBRL_metrics",
+            "period": "2023-Q1",
+            "section": "net_charge_offs",
+            "excerpt": "net_charge_offs: $1.30B"
+          },
+          {
+            "company": "Citigroup",
+            "source_type": "formal_disclosure",
+            "filing_type": "XBRL_metrics",
+            "period": "2023-Q2",
+            "section": "net_charge_offs",
+            "excerpt": "net_charge_offs: $1.50B"
+          }
+        ],
+        "contradictory_evidence": [],
+        "relevant_metrics": [
+          {
+            "ticker": "JPM",
+            "metric_name": "net_charge_offs",
+            "period": "2023-Q4",
+            "value": "$6.21B",
+            "change": "YoY +117.6%"
+          },
+          {
+            "ticker": "JPM",
+            "metric_name": "net_charge_offs",
+            "period": "2024-Q1",
+            "value": "$1.96B",
+            "change": "YoY +72.0%"
+          },
+          {
+            "ticker": "BAC",
+            "metric_name": "net_charge_offs",
+            "period": "2023-Q4",
+            "value": "$3.80B",
+            "change": "YoY +74.9%"
+          },
+          {
+            "ticker": "BAC",
+            "metric_name": "net_charge_offs",
+            "period": "2024-Q1",
+            "value": "$1.50B",
+            "change": "YoY +85.6%"
+          },
+          {
+            "ticker": "C",
+            "metric_name": "net_charge_offs",
+            "period": "2023-Q1",
+            "value": "$1.30B",
+            "change": "N/A"
+          },
+          {
+            "ticker": "C",
+            "metric_name": "net_charge_offs",
+            "period": "2023-Q2",
+            "value": "$1.50B",
+            "change": "N/A"
+          }
+        ],
+        "missing_information": [
+          "The claim does not specify which 'current period' is being referenced (e.g., 2023-Q4, 2024-Q1, etc.).",
+          "No historical data prior to 2022-Q4 is provided for comparison.",
+          "The claim does not specify whether it refers to a single company or the broader industry.",
+          "No explicit data on 'consumer credit losses' as a standalone metric is provided; net charge-offs and provisions are used as proxies."
+        ],
+        "analyst_follow_up_questions": [
+          "Which specific period is being referred to as the 'current period' in the claim?",
+          "Are there additional historical periods (pre-2022) available for comparison?",
+          "Does the claim refer to a specific company or the broader industry?",
+          "Can you provide a definition of 'consumer credit losses' as used in the claim (e.g., net charge-offs, provisions, or another metric)?",
+          "Are there other metrics (e.g., delinquency rates, non-performing loans) that could provide additional context for the claim?"
+        ]
+      },
+      {
+        "claim": "Consumer credit losses are projected to decrease in the next reporting period based on available data.",
+        "assessment": "contradicted",
+        "rationale": "The evidence shows an increase in consumer credit losses across multiple metrics and periods for the companies provided (JPM, BAC, C). Specifically, net charge-offs (a direct measure of credit losses) have increased year-over-year in the most recent quarters for all three companies. Additionally, the provision for credit losses (which reflects expected future losses) has also increased significantly in recent periods, indicating higher expected credit losses rather than decreases.",
+        "supporting_evidence": [],
+        "qualifying_evidence": [],
+        "contradictory_evidence": [
+          {
+            "company": "JPM",
+            "source_type": "formal_disclosure",
+            "filing_type": "XBRL",
+            "period": "2024-Q1",
+            "section": "net_charge_offs",
+            "excerpt": "Net charge-offs: $1.96B (YoY +72.0%)"
+          },
+          {
+            "company": "JPM",
+            "source_type": "formal_disclosure",
+            "filing_type": "XBRL",
+            "period": "2023-Q4",
+            "section": "net_charge_offs",
+            "excerpt": "Net charge-offs: $6.21B (YoY +117.6%)"
+          },
+          {
+            "company": "BAC",
+            "source_type": "formal_disclosure",
+            "filing_type": "XBRL",
+            "period": "2024-Q1",
+            "section": "net_charge_offs",
+            "excerpt": "Net charge-offs: $1.50B (YoY +85.6%)"
+          },
+          {
+            "company": "BAC",
+            "source_type": "formal_disclosure",
+            "filing_type": "XBRL",
+            "period": "2023-Q4",
+            "section": "net_charge_offs",
+            "excerpt": "Net charge-offs: $3.80B (YoY +74.9%)"
+          },
+          {
+            "company": "C",
+            "source_type": "formal_disclosure",
+            "filing_type": "XBRL",
+            "period": "2024-Q1",
+            "section": "net_charge_offs",
+            "excerpt": "Net charge-offs: $2.30B"
+          },
+          {
+            "company": "C",
+            "source_type": "formal_disclosure",
+            "filing_type": "XBRL",
+            "period": "2023-Q4",
+            "section": "provision_for_credit_losses",
+            "excerpt": "Provision for credit losses: $7.79B (YoY +64.1%)"
+          }
+        ],
+        "relevant_metrics": [
+          {
+            "ticker": "JPM",
+            "metric_name": "net_charge_offs",
+            "period": "2024-Q1",
+            "value": "$1.96B",
+            "change": "YoY +72.0%"
+          },
+          {
+            "ticker": "JPM",
+            "metric_name": "net_charge_offs",
+            "period": "2023-Q4",
+            "value": "$6.21B",
+            "change": "YoY +117.6%"
+          },
+          {
+            "ticker": "BAC",
+            "metric_name": "net_charge_offs",
+            "period": "2024-Q1",
+            "value": "$1.50B",
+            "change": "YoY +85.6%"
+          },
+          {
+            "ticker": "BAC",
+            "metric_name": "net_charge_offs",
+            "period": "2023-Q4",
+            "value": "$3.80B",
+            "change": "YoY +74.9%"
+          },
+          {
+            "ticker": "C",
+            "metric_name": "net_charge_offs",
+            "period": "2024-Q1",
+            "value": "$2.30B",
+            "change": "N/A"
+          },
+          {
+            "ticker": "C",
+            "metric_name": "provision_for_credit_losses",
+            "period": "2023-Q4",
+            "value": "$7.79B",
+            "change": "YoY +64.1%"
+          }
+        ],
+        "missing_information": [
+          "No formal projections or forward-looking statements from management or formal disclosures explicitly stating a decrease in consumer credit losses for the next reporting period.",
+          "No evidence of a decrease in consumer credit losses in the most recent quarters for the companies provided."
+        ],
+        "analyst_follow_up_questions": [
+          "Are there any internal or third-party economic outlooks cited in recent filings that support a decrease in consumer credit losses?",
+          "Has management provided any qualitative commentary in recent earnings calls or presentations about expected trends in consumer credit losses?",
+          "Are there any specific segments (e.g., credit cards, auto loans) within consumer credit where losses are projected to decrease?",
+          "What macroeconomic variables or scenarios are being used to project consumer credit losses, and how do they align with the claim?"
+        ]
+      },
+      {
+        "claim": "Historical trends indicate that consumer credit losses typically follow a cyclical pattern with identifiable peaks.",
+        "assessment": "partially_supported",
+        "rationale": "The evidence shows cyclical patterns in consumer credit losses (e.g., net charge-offs and provisions for credit losses) across multiple quarters and years for JPM, BAC, and C, with identifiable peaks (e.g., Q4 2023 for JPM and BAC, Q4 2023 for C). However, the evidence is limited to a short timeframe (2022-2024) and does not explicitly confirm long-term historical cyclicality beyond this period. The formal disclosures (SEC filings) provide quantitative trends but do not explicitly state that these patterns are historically cyclical.",
+        "supporting_evidence": [
+          {
+            "company": "JPM",
+            "source_type": "formal_disclosure",
+            "filing_type": "XBRL_metrics",
+            "period": "2022-Q4 to 2024-Q1",
+            "section": "net_charge_offs, provision_for_credit_losses",
+            "excerpt": "Net charge-offs and provisions for credit losses show cyclical peaks (e.g., Q4 2023: $6.21B net charge-offs, $9.32B provision; Q4 2022: $2.85B net charge-offs, $6.39B provision)."
+          },
+          {
+            "company": "BAC",
+            "source_type": "formal_disclosure",
+            "filing_type": "XBRL_metrics",
+            "period": "2022-Q4 to 2024-Q1",
+            "section": "net_charge_offs, provision_for_credit_losses",
+            "excerpt": "Net charge-offs and provisions for credit losses show cyclical peaks (e.g., Q4 2023: $3.80B net charge-offs, $4.72B provision; Q4 2022: $2.17B net charge-offs, $2.46B provision)."
+          },
+          {
+            "company": "C",
+            "source_type": "formal_disclosure",
+            "filing_type": "XBRL_metrics",
+            "period": "2022-Q4 to 2024-Q1",
+            "section": "net_charge_offs, provision_for_credit_losses",
+            "excerpt": "Net charge-offs and provisions for credit losses show cyclical peaks (e.g., Q4 2023: $7.79B provision; Q4 2022: $4.75B provision)."
+          },
+          {
+            "company": "Citigroup",
+            "source_type": "management_commentary",
+            "filing_type": "management_statement",
+            "period": "2024-01-12",
+            "section": "",
+            "excerpt": "Management commentary indicates expectations of peaking loss rates in 2024, suggesting cyclical behavior."
+          }
+        ],
+        "qualifying_evidence": [
+          {
+            "company": "Bank of America",
+            "source_type": "formal_disclosure",
+            "filing_type": "10-K",
+            "period": "2023-Q4",
+            "section": "Provision for Credit Losses",
+            "excerpt": "The provision for credit losses increased $1.9 billion to $4.4 billion in 2023 compared to 2022, driven by consumer portfolio dynamics and macroeconomic conditions."
+          }
+        ],
+        "contradictory_evidence": [],
+        "relevant_metrics": [
+          {
+            "ticker": "JPM",
+            "metric_name": "net_charge_offs",
+            "period": "2023-Q4",
+            "value": "$6.21B",
+            "change": "YoY +117.6%"
+          },
+          {
+            "ticker": "JPM",
+            "metric_name": "provision_for_credit_losses",
+            "period": "2023-Q4",
+            "value": "$9.32B",
+            "change": "YoY +45.9%"
+          },
+          {
+            "ticker": "BAC",
+            "metric_name": "net_charge_offs",
+            "period": "2023-Q4",
+            "value": "$3.80B",
+            "change": "YoY +74.9%"
+          },
+          {
+            "ticker": "BAC",
+            "metric_name": "provision_for_credit_losses",
+            "period": "2023-Q4",
+            "value": "$4.72B",
+            "change": "YoY +92.1%"
+          },
+          {
+            "ticker": "C",
+            "metric_name": "provision_for_credit_losses",
+            "period": "2023-Q4",
+            "value": "$7.79B",
+            "change": "YoY +64.1%"
+          }
+        ],
+        "missing_information": [
+          "Long-term historical data (beyond 2022-2024) to confirm cyclical patterns over multiple economic cycles.",
+          "Explicit statements from formal disclosures (SEC filings) confirming the cyclical nature of consumer credit losses.",
+          "Comparative analysis of consumer credit loss cycles across different economic environments (e.g., pre-2020, post-2020)."
+        ],
+        "analyst_follow_up_questions": [
+          "Can you provide historical data on consumer credit losses (e.g., net charge-offs, provisions) for the past 10+ years to assess long-term cyclical patterns?",
+          "Are there any formal disclosures (e.g., 10-K risk factors, MD&A) that explicitly describe consumer credit losses as cyclical?",
+          "How do current loss trends compare to historical peaks (e.g., 2008 financial crisis, COVID-19 period) in terms of magnitude and duration?",
+          "What macroeconomic variables (e.g., unemployment rate, GDP growth) are cited in formal disclosures as drivers of cyclical credit loss patterns?"
+        ]
+      },
+      {
+        "claim": "Current economic indicators (e.g., unemployment rate, GDP growth) support the claim that consumer credit losses have peaked.",
+        "assessment": "insufficient_evidence",
+        "rationale": "The evidence provided does not directly link current economic indicators (unemployment rate, GDP growth) to the peaking of consumer credit losses. While formal disclosures (10-K/Q filings) describe the use of macroeconomic variables in credit loss modeling, they do not explicitly state that current economic conditions support the peaking of credit losses. Management commentary suggests consumer resilience but does not tie this to a peak in credit losses. Metrics show rising net charge-offs and provisions for credit losses in recent quarters, which contradicts the claim of peaking losses.",
+        "supporting_evidence": [
+          {
+            "company": "Bank of America",
+            "source_type": "formal_disclosure",
+            "filing_type": "10-Q",
+            "period": "2023-Q1",
+            "section": "Credit Card and Other Consumer",
+            "excerpt": "These scenarios include key macroeconomic variables such as gross domestic product, unemployment rate, real estate prices and corporate bond spreads. The scenarios that are chosen each quarter and the weighting given to each scenario depend on a variety of factors including recent economic events, leading economic indicators, internal and third-party economist views, and industry trends."
+          },
+          {
+            "company": "Bank of America",
+            "source_type": "formal_disclosure",
+            "filing_type": "10-K",
+            "period": "2023-Q4",
+            "section": "Credit Card and Other Consumer",
+            "excerpt": "weighted economic outlook over the forecasted life of the assets. These scenarios include key macroeconomic variables such as gross domestic product, unemployment rate, real estate prices and corporate bond spreads. The scenarios that are chosen each quarter and the weighting given to each scenario depend on a variety of factors including recent economic events, leading economic indicators, internal and third-party economist views, and industry trends."
+          },
+          {
+            "company": "JPMorgan Chase",
+            "source_type": "formal_disclosure",
+            "filing_type": "10-K",
+            "period": "2022-Q4",
+            "section": "ALLOWANCE FOR CREDIT LOSSES",
+            "excerpt": "(a)Reflects quarterly average of forecasted U.S. unemployment rate.(b)The year over year growth in U.S. real GDP in the forecast horizon of the central scenario is calculated as the percentage change in U.S. real GDP levels from the prior year."
+          },
+          {
+            "company": "Bank of America",
+            "source_type": "management_commentary",
+            "filing_type": null,
+            "period": "2023-07-18",
+            "section": null,
+            "excerpt": "If you look at our charge-offs, for example, that's mainly about loan growth and a little bit about the rate picking up just a little bit. But it's still well below pandemic. Fourth quarter '19 was a great quarter for asset quality and cards. So it gets back to this idea that the consumer is still in a pretty healthy place...."
+          },
+          {
+            "company": "Citigroup",
+            "source_type": "management_commentary",
+            "filing_type": null,
+            "period": "2023-07-14",
+            "section": null,
+            "excerpt": "We see the U.S. consumer as resilient. We've talked about them being cautious, but they're not recessionary. And we are seeing more pressure on the lower FICOs. We don't have a large number of that in our portfolio. That is where we're seeing more of the normalization happening on the payment rates, for example, and other behaviors in there. So it's quite localized, but I don't think we should be overly concerned here about the health of the U.S. consumer...."
+          }
+        ],
+        "qualifying_evidence": [],
+        "contradictory_evidence": [
+          {
+            "company": "JPMorgan Chase",
+            "source_type": "formal_disclosure",
+            "filing_type": "SEC companyfacts API",
+            "period": "2023-Q4",
+            "section": "net_charge_offs",
+            "excerpt": "net_charge_offs: $6.21B (YoY +117.6%)"
+          },
+          {
+            "company": "JPMorgan Chase",
+            "source_type": "formal_disclosure",
+            "filing_type": "SEC companyfacts API",
+            "period": "2024-Q1",
+            "section": "net_charge_offs",
+            "excerpt": "net_charge_offs: $1.96B (YoY +72.0%)"
+          },
+          {
+            "company": "Bank of America",
+            "source_type": "formal_disclosure",
+            "filing_type": "SEC companyfacts API",
+            "period": "2023-Q4",
+            "section": "net_charge_offs",
+            "excerpt": "net_charge_offs: $3.80B (YoY +74.9%)"
+          },
+          {
+            "company": "Bank of America",
+            "source_type": "formal_disclosure",
+            "filing_type": "SEC companyfacts API",
+            "period": "2024-Q1",
+            "section": "net_charge_offs",
+            "excerpt": "net_charge_offs: $1.50B (YoY +85.6%)"
+          },
+          {
+            "company": "Citigroup",
+            "source_type": "formal_disclosure",
+            "filing_type": "SEC companyfacts API",
+            "period": "2024-Q1",
+            "section": "net_charge_offs",
+            "excerpt": "net_charge_offs: $2.30B"
+          }
+        ],
+        "relevant_metrics": [
+          {
+            "ticker": "JPM",
+            "metric_name": "net_charge_offs",
+            "period": "2023-Q4",
+            "value": "$6.21B",
+            "change": "YoY +117.6%"
+          },
+          {
+            "ticker": "JPM",
+            "metric_name": "net_charge_offs",
+            "period": "2024-Q1",
+            "value": "$1.96B",
+            "change": "YoY +72.0%"
+          },
+          {
+            "ticker": "BAC",
+            "metric_name": "net_charge_offs",
+            "period": "2023-Q4",
+            "value": "$3.80B",
+            "change": "YoY +74.9%"
+          },
+          {
+            "ticker": "BAC",
+            "metric_name": "net_charge_offs",
+            "period": "2024-Q1",
+            "value": "$1.50B",
+            "change": "YoY +85.6%"
+          },
+          {
+            "ticker": "C",
+            "metric_name": "net_charge_offs",
+            "period": "2024-Q1",
+            "value": "$2.30B",
+            "change": "N/A"
+          }
+        ],
+        "missing_information": [
+          "Direct evidence linking current unemployment rate or GDP growth to the peaking of consumer credit losses.",
+          "Explicit statements from formal disclosures that current economic conditions support peaking credit losses.",
+          "Historical or forward-looking economic indicator data (e.g., unemployment rate, GDP growth) tied to credit loss metrics."
+        ],
+        "analyst_follow_up_questions": [
+          "Can management provide explicit evidence or statements linking current unemployment rate and GDP growth to the peaking of consumer credit losses?",
+          "Are there forward-looking economic scenarios or stress tests that explicitly support the claim of peaking credit losses?",
+          "What is the current unemployment rate and GDP growth forecast used in credit loss modeling, and how do these compare to historical peaks/troughs?",
+          "Are there any formal disclosures (e.g., 10-K/Q) that explicitly state that consumer credit losses have peaked based on economic indicators?"
+        ]
+      },
+      {
+        "claim": "Independent credit risk models or third-party analyses confirm that consumer credit losses have reached a peak.",
+        "assessment": "insufficient_evidence",
+        "rationale": "The provided evidence does not include any formal disclosures or management commentary from independent credit risk models or third-party analyses. The formal disclosures (SEC filings) describe the use of internal statistical models and credit risk management processes but do not confirm that consumer credit losses have peaked. The metrics show trends in allowance for credit losses, net charge-offs, and provisions, but these do not explicitly state that losses have peaked or are confirmed by independent models.",
+        "supporting_evidence": [],
+        "qualifying_evidence": [
+          {
+            "company": "Bank of America",
+            "source_type": "formal_disclosure",
+            "filing_type": "10-Q",
+            "period": "2023-Q1",
+            "section": "Liquidity Stress Analysis",
+            "excerpt": "These models are used in part to assist in making both new and ongoing credit decisions as well as portfolio management strategies, including authorizations and line management, collection practices and strategies, and determination of the allowance for loan and lease losses and allocated capital for credit risk."
+          },
+          {
+            "company": "Bank of America",
+            "source_type": "formal_disclosure",
+            "filing_type": "10-Q",
+            "period": "2023-Q2",
+            "section": "Liquidity Stress Analysis",
+            "excerpt": "Statistical techniques in conjunction with experiential judgment are used in all aspects of portfolio management including underwriting, product pricing, risk appetite, setting credit limits, and establishing operating processes and metrics to quantify and balance risks and returns."
+          },
+          {
+            "company": "Bank of America",
+            "source_type": "formal_disclosure",
+            "filing_type": "10-K",
+            "period": "2022-Q4",
+            "section": "Other Consumer",
+            "excerpt": "At December 31, 2022 and 2021, residential mortgage TDRs deemed collateral dependent totaled $1.8 billion and $1.6 billion..."
+          }
+        ],
+        "contradictory_evidence": [],
+        "relevant_metrics": [
+          {
+            "ticker": "JPM",
+            "metric_name": "net_charge_offs",
+            "period": "2023-Q4",
+            "value": "$6.21B",
+            "change": "YoY +117.6%"
+          },
+          {
+            "ticker": "JPM",
+            "metric_name": "net_charge_offs",
+            "period": "2024-Q1",
+            "value": "$1.96B",
+            "change": "YoY +72.0%"
+          },
+          {
+            "ticker": "BAC",
+            "metric_name": "net_charge_offs",
+            "period": "2023-Q4",
+            "value": "$3.80B",
+            "change": "YoY +74.9%"
+          },
+          {
+            "ticker": "BAC",
+            "metric_name": "net_charge_offs",
+            "period": "2024-Q1",
+            "value": "$1.50B",
+            "change": "YoY +85.6%"
+          },
+          {
+            "ticker": "C",
+            "metric_name": "net_charge_offs",
+            "period": "2024-Q1",
+            "value": "$2.30B",
+            "change": "YoY +39.4%"
+          }
+        ],
+        "missing_information": [
+          "No formal disclosures or third-party analyses explicitly stating that consumer credit losses have peaked.",
+          "No independent credit risk model outputs or third-party confirmations provided in the evidence.",
+          "No forward-looking statements or model-based projections indicating a peak in credit losses."
+        ],
+        "analyst_follow_up_questions": [
+          "Are there any third-party credit risk model reports or independent analyses (e.g., from rating agencies or credit bureaus) that confirm consumer credit losses have peaked?",
+          "Does management have access to proprietary or external credit risk models that indicate a peak in losses, and if so, can these be disclosed or summarized?",
+          "Are there any stress test results or scenario analyses from regulators (e.g., CCAR) that suggest consumer credit losses have peaked?",
+          "Can the company provide specific metrics or outputs from independent credit risk models (e.g., PD/LGD models, macroeconomic scenario analyses) that support the claim?"
+        ]
+      }
+    ],
+    "limitations": [
+      "Assessment based on available SEC filings and curated metrics only. This is not investment advice."
+    ],
+    "confidence": 0.38
+  }
+}
