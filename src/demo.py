@@ -237,7 +237,7 @@ def claim_assessment_markdown(result: dict, verbose: bool = False) -> str:
         if missing:
             lines += ["", "**Missing**", *[f"- {_md_inline(item)}" for item in missing]]
 
-        follow_ups = claim_assessment.get("analyst_follow_up_questions") if verbose else None
+        follow_ups = claim_assessment.get("analyst_follow_up_questions", []) if verbose else []
         if follow_ups:
             lines += ["", "**Follow-up questions**", *[f"- {_md_inline(q)}" for q in follow_ups]]
 

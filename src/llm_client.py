@@ -13,7 +13,7 @@ from src.config import settings
 
 MAX_RETRIES = 5
 RETRY_BACKOFF_SECONDS = 2.0
-CHAT_RATE_LIMIT_SECONDS = 0.1
+CHAT_RATE_LIMIT_SECONDS = 0.5
 
 
 class LLMClient:
@@ -52,8 +52,19 @@ class LLMClient:
                 is_retryable = is_connection_error or is_retryable_status
                 if not is_retryable or attempt == MAX_RETRIES - 1:
                     raise
-                sleep_seconds = RETRY_BACKOFF_SECONDS * (2**attempt)
-                print(f"  (retrying after {type(error).__name__}, sleeping {sleep_seconds:.0f}s)")
+                # Honour Retry-After if the server sent one (common on 429); fall back to
+                # exponential backoff only when the header is absent or unparseable.
+                retry_after = None
+                if isinstance(error, SDKError):
+                    status = error.raw_response.status_code
+                    try:
+                        retry_after = float(error.raw_response.headers.get("Retry-After", ""))
+                    except (ValueError, TypeError):
+                        retry_after = None
+                else:
+                    status = 0
+                sleep_seconds = retry_after if retry_after else RETRY_BACKOFF_SECONDS * (2**attempt)
+                print(f"  (retrying after {type(error).__name__} [{status}], sleeping {sleep_seconds:.0f}s)")
                 time.sleep(sleep_seconds)
         # Unreachable: the final attempt either returns or re-raises above. This satisfies
         # static analysis that every path has an explicit, consistent return.
