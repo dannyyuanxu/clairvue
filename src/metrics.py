@@ -22,8 +22,18 @@ from src.data_ingestion import get_xbrl_facts
 METRICS_CSV_PATH = "data/processed/metrics.csv"
 XBRL_CACHE_DIR = Path("data/raw/xbrl")
 
-START_DATE = "2022-10-01"
+# Window starts in 2019 to capture a pre-pandemic baseline: "normalizing" credit
+# losses only mean anything relative to the pre-2020 norm and the 2020-21
+# stimulus-suppressed trough. Filing *text* is still only ingested for Q4'22-Q4'23
+# (see CLAUDE.md scope) -- only the quantitative XBRL series is backfilled here, which
+# is free: the cached companyfacts JSON already contains the full history.
+START_DATE = "2019-01-01"
 END_DATE = "2024-03-31"
+# Concept selection must prioritize the demo/text window over raw row count: widening
+# START_DATE to 2019 means an older, now-discontinued concept can have MORE total rows than
+# the current post-CECL concept while stopping in 2022 -- which would silently drop the 2023
+# data the demo needs. So candidates are ranked by coverage at/after this date first.
+SELECTION_WINDOW_START = "2022-10-01"
 RATE_LIMIT_SECONDS = 0.15
 MIN_EXPECTED_ROWS = 4  # one per quarter in range; fewer means the concept is wrong/incomplete
 
@@ -59,13 +69,13 @@ METRIC_DEFINITIONS = [
     ),
     (
         "net_charge_offs",
-        [
-            "FinancingReceivableExcludingAccruedInterestAllowanceForCreditLossWriteoffAfterRecovery",
-            "FinancingReceivableAllowanceForCreditLossesWriteOffs",
-            None,
-        ],
-        "Write-offs net of recoveries (gross charge-offs minus recoveries). Less consistently "
-        "tagged across banks than the other 3 metrics -- see concept_used per row.",
+        None,  # stitched across two concepts -- see _build_net_charge_offs_rows
+        "Charge-offs (YTD-cumulative; annualized elsewhere via fact duration). Stitched: the "
+        "post-CECL net concept (WriteoffAfterRecovery) is used wherever available -- it covers "
+        "~2021 onward, including the entire text-corpus window -- and the older gross WriteOffs "
+        "concept fills the pre-2021 baseline only. So pre-2021 figures are GROSS of recoveries "
+        "(marginally overstated vs net); the demo-window figures are unchanged net values. "
+        "concept_used is recorded per row.",
     ),
     (
         "total_loans",
@@ -78,12 +88,28 @@ METRIC_DEFINITIONS = [
         "happens to equal before-minus-allowance exactly for BAC and C. Computing "
         "it ourselves guarantees net <= gross for all 3 banks.",
     ),
+    (
+        "net_charge_off_rate",
+        None,  # computed -- see _build_net_charge_off_rate_rows
+        "Annualized net charge-offs as a percent of net loans -- the loss RATE, not a "
+        "dollar amount. This is the interpretable, cross-bank-comparable view of credit "
+        "losses. Denominator is period-end net loans (approximates average loans).",
+    ),
 ]
 
 CONCEPT_TIERS = ["primary", "alternate", "fallback"]
 
 GROSS_LOANS_CONCEPT = "FinancingReceivableExcludingAccruedInterestBeforeAllowanceForCreditLoss"
 ALLOWANCE_CONCEPT_FOR_NET_LOANS = "FinancingReceivableAllowanceForCreditLossExcludingAccruedInterest"
+
+# Net charge-offs, in priority order: the post-CECL net-of-recovery concept first (used
+# wherever it exists, which is the full text-corpus window), then the older gross concept
+# to backfill the pre-2021 baseline. No single concept spans 2019..2024 for any of the 3
+# banks, so the series is stitched per period (first concept that has the period wins).
+NET_CHARGE_OFFS_CONCEPTS = [
+    "FinancingReceivableExcludingAccruedInterestAllowanceForCreditLossWriteoffAfterRecovery",
+    "FinancingReceivableAllowanceForCreditLossesWriteOffs",
+]
 
 
 def _get_company_facts(ticker: str, cik: str) -> dict:
@@ -154,6 +180,12 @@ def fetch_xbrl_metric(cik: str, concept: str, ticker: str, company: str) -> list
         by_end[fact["end"]].append(fact)
     final_facts = [_select_best_fact(group) for group in by_end.values()]
 
+    def period_days(fact: dict) -> int | None:
+        start = fact.get("start")
+        if not start:
+            return None  # instant/balance fact (e.g. allowance, loans) -- no duration
+        return (date.fromisoformat(fact["end"]) - date.fromisoformat(start)).days
+
     return [
         {
             "ticker": ticker,
@@ -163,6 +195,8 @@ def fetch_xbrl_metric(cik: str, concept: str, ticker: str, company: str) -> list
             "value": fact["val"],
             "unit": "USD",
             "concept": concept,
+            "start": fact.get("start"),
+            "period_days": period_days(fact),
         }
         for fact in sorted(final_facts, key=lambda fact: fact["end"])
     ]
@@ -186,9 +220,59 @@ def _build_total_loans_rows(ticker: str, cik: str, company: str) -> list[dict]:
             "value": gross_by_period[period_end]["value"] - allowance_by_period[period_end]["value"],
             "unit": "USD",
             "concept": f"computed: {GROSS_LOANS_CONCEPT} minus {ALLOWANCE_CONCEPT_FOR_NET_LOANS}",
+            "start": None,  # balance (instant) figure -- no duration
+            "period_days": None,
         }
         for period_end in sorted(set(gross_by_period) & set(allowance_by_period))
     ]
+
+
+def _build_net_charge_offs_rows(ticker: str, cik: str, company: str) -> list[dict]:
+    """Net charge-offs stitched across concepts (see NET_CHARGE_OFFS_CONCEPTS): for each
+    period, the first concept in priority order that reports it wins, so the net post-CECL
+    figure is used wherever it exists and the older gross concept only backfills earlier
+    periods. concept stays on each row so concept_used is recorded per period."""
+    by_period: dict[str, dict] = {}
+    for concept in NET_CHARGE_OFFS_CONCEPTS:
+        for row in fetch_xbrl_metric(cik, concept, ticker, company):
+            by_period.setdefault(row["period_end"], row)
+    return [by_period[period] for period in sorted(by_period)]
+
+
+def _build_net_charge_off_rate_rows(nco_rows: list[dict], total_loans_rows: list[dict]) -> list[dict]:
+    """Net charge-off RATE -- the headline interpretable metric. A dollar charge-off
+    figure is meaningless without a denominator; the annualized rate (loss as a % of
+    the loan book) is what tells you whether losses are high or low and is directly
+    comparable across banks and against the pre-pandemic baseline.
+
+    Annualized using each fact's actual duration (365 / period_days) so a quarterly
+    and a YTD-cumulative charge-off figure both normalize to the same annual basis.
+    Denominator is period-end net loans (an approximation of average loans -- noted in
+    the comparability_note)."""
+    loans_by_period = {row["period_end"]: row for row in total_loans_rows}
+    rate_rows = []
+    for nco in nco_rows:
+        period_end = nco["period_end"]
+        period_days = nco.get("period_days")
+        loans = loans_by_period.get(period_end)
+        if loans is None or not period_days or not loans["value"]:
+            continue
+        annualized_nco = nco["value"] * (365 / period_days)
+        rate_pct = annualized_nco / loans["value"] * 100
+        rate_rows.append(
+            {
+                "ticker": nco["ticker"],
+                "company": nco["company"],
+                "period_end": period_end,
+                "form": nco["form"],
+                "value": round(rate_pct, 4),
+                "unit": "percent_annualized",
+                "concept": "computed: net_charge_offs (annualized) / total_loans (net)",
+                "start": None,
+                "period_days": None,
+            }
+        )
+    return rate_rows
 
 
 def build_metrics_table() -> pd.DataFrame:
@@ -198,6 +282,10 @@ def build_metrics_table() -> pd.DataFrame:
     concept coverage is bank-specific post-CECL, so "first non-empty" can silently
     pick a sparse/wrong concept over a fully-covered one."""
     rows = []
+    # Raw (pre-DataFrame) rows kept per (ticker, metric_name) so derived metrics --
+    # net_charge_off_rate -- can reference earlier metrics' rows (with their durations)
+    # instead of re-fetching. METRIC_DEFINITIONS is ordered so dependencies come first.
+    raw_rows_by_key: dict[tuple[str, str], list[dict]] = {}
 
     for metric_name, candidates, comparability_note in METRIC_DEFINITIONS:
         for ticker, (cik, company) in COMPANIES.items():
@@ -210,18 +298,38 @@ def build_metrics_table() -> pd.DataFrame:
                 if metric_rows:
                     concept_used = metric_rows[0]["concept"]
                     tier_used = "computed"
+            elif metric_name == "net_charge_offs":
+                metric_rows = _build_net_charge_offs_rows(ticker, cik, company)
+                if metric_rows:
+                    concept_used = "stitched (see notes / per-row concept)"
+                    tier_used = "stitched"
+            elif metric_name == "net_charge_off_rate":
+                metric_rows = _build_net_charge_off_rate_rows(
+                    raw_rows_by_key.get((ticker, "net_charge_offs"), []),
+                    raw_rows_by_key.get((ticker, "total_loans"), []),
+                )
+                if metric_rows:
+                    concept_used = metric_rows[0]["concept"]
+                    tier_used = "computed"
             else:
-                # Try every tier rather than stopping at the first non-empty one: a
-                # concept that technically exists but with only 1-2 stale data points
-                # should lose to one with full quarterly coverage in our window.
+                # Rank candidates by demo-window coverage first, then total rows: a concept
+                # that technically exists but doesn't reach the demo window (or has only 1-2
+                # stale points) should lose to one with full coverage there. Ranking on raw
+                # row count alone would wrongly prefer a long-history concept that stops in 2022.
+                best_key = (-1, -1)
                 for tier, concept in zip(CONCEPT_TIERS, candidates):
                     if concept is None:
                         continue
                     candidate_rows = fetch_xbrl_metric(cik, concept, ticker, company)
-                    if len(candidate_rows) > len(metric_rows):
+                    recent = sum(1 for r in candidate_rows if r["period_end"] >= SELECTION_WINDOW_START)
+                    key = (recent, len(candidate_rows))
+                    if key > best_key:
+                        best_key = key
                         metric_rows = candidate_rows
                         concept_used = concept
                         tier_used = tier
+
+            raw_rows_by_key[(ticker, metric_name)] = metric_rows
 
             if not metric_rows:
                 tried = [GROSS_LOANS_CONCEPT, ALLOWANCE_CONCEPT_FOR_NET_LOANS] if candidates is None else [
@@ -244,6 +352,9 @@ def build_metrics_table() -> pd.DataFrame:
                 )
                 continue
 
+            # Rate metrics carry a percent in `value`; value_billions is meaningless
+            # for them (left NaN). Dollar metrics keep the billions convenience column.
+            is_rate = metric_name == "net_charge_off_rate"
             for metric_row in metric_rows:
                 rows.append(
                     {
@@ -253,10 +364,12 @@ def build_metrics_table() -> pd.DataFrame:
                         "form": metric_row["form"],
                         "metric_name": metric_name,
                         "value": metric_row["value"],
-                        "value_billions": round(metric_row["value"] / 1e9, 2),
+                        "value_billions": None if is_rate else round(metric_row["value"] / 1e9, 2),
                         "unit": metric_row["unit"],
-                        "concept_used": concept_used,
-                        "source": "SEC companyfacts API",
+                        # Stitched metrics (net_charge_offs, total_loans) carry the real
+                        # concept on each row; record that rather than the summary label.
+                        "concept_used": metric_row.get("concept", concept_used),
+                        "source": "computed" if tier_used == "computed" else "SEC companyfacts API",
                         "notes": f"concept tier: {tier_used}. {comparability_note}",
                     }
                 )
@@ -299,6 +412,10 @@ def calculate_period_changes(df: pd.DataFrame) -> pd.DataFrame:
 
     df["qoq_change_pct"] = (df["value"] - prior_quarter) / prior_quarter.abs() * 100
     df["yoy_change_pct"] = (df["value"] - prior_year) / prior_year.abs() * 100
+    # Absolute deltas too: for a rate metric a percentage-point move (e.g. +0.09pp) is the
+    # natural reading, not a "% change of a percent". Dollar metrics use the pct columns.
+    df["qoq_change_abs"] = df["value"] - prior_quarter
+    df["yoy_change_abs"] = df["value"] - prior_year
     return df
 
 
@@ -338,10 +455,13 @@ def _main() -> None:
     available = df[df["source"] != "unavailable_xbrl"].sort_values(["metric_name", "ticker", "period_end"])
     for _, row in available.iterrows():
         period = _period_label(row["period_end"])
-        print(
-            f"{row['ticker']} | {row['metric_name']} | {period} | "
-            f"{_format_dollar(row['value_billions'])} | {_format_pct(row['yoy_change_pct'])} YoY"
-        )
+        if row["metric_name"] == "net_charge_off_rate":
+            value_str = "N/A" if pd.isna(row["value"]) else f"{row['value']:.2f}%"
+            change_str = "N/A" if pd.isna(row["yoy_change_abs"]) else f"{row['yoy_change_abs']:+.2f}pp"
+        else:
+            value_str = _format_dollar(row["value_billions"])
+            change_str = f"{_format_pct(row['yoy_change_pct'])}"
+        print(f"{row['ticker']} | {row['metric_name']} | {period} | {value_str} | {change_str} YoY")
 
     unavailable = df[df["source"] == "unavailable_xbrl"]
     print("\n--- Metrics with zero rows (concept not found / incomplete) ---")

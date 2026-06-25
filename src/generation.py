@@ -15,13 +15,6 @@ from src.retrieval import EvidenceRetriever, format_evidence_for_prompt
 
 DEFAULT_TICKERS = ["JPM", "BAC", "C"]
 
-CONFIDENCE_BY_ASSESSMENT = {
-    "supported": 1.0,
-    "partially_supported": 0.6,
-    "contradicted": 0.3,
-    "insufficient_evidence": 0.2,
-}
-
 LIMITATIONS = [
     "Assessment based on available SEC filings and curated metrics only. This is not investment advice."
 ]
@@ -45,17 +38,21 @@ def _get_metrics_df() -> pd.DataFrame:
 
 
 def _overall_assessment(claim_assessments: list[dict]) -> str:
-    """Rolls up per-claim verdicts into one label: all-supported wins outright,
-    a contradicted majority wins outright, and everything else -- including any
-    mix containing insufficient_evidence -- collapses to partially_supported.
-    (This means a compound claim with mostly-insufficient sub-claims will not
-    surface as "insufficient_evidence" at the top level -- see the eval notes.)"""
+    """Rolls up per-claim verdicts into one label. A contradicted majority wins outright.
+    Otherwise the roll-up is decided by the DECISIVE sub-claims only -- a minority of
+    insufficient_evidence sub-claims (a gap on one sub-point) no longer drags an otherwise
+    fully-supported statement down to partially_supported. Only when every sub-claim is
+    insufficient does the whole statement read insufficient."""
     verdicts = [assessment.get("assessment") for assessment in claim_assessments]
 
-    if all(verdict == "supported" for verdict in verdicts):
-        return "supported"
     if verdicts.count("contradicted") > len(verdicts) / 2:
         return "contradicted"
+
+    decisive = [verdict for verdict in verdicts if verdict != "insufficient_evidence"]
+    if not decisive:
+        return "insufficient_evidence"
+    if all(verdict == "supported" for verdict in decisive):
+        return "supported"
     return "partially_supported"
 
 
@@ -82,15 +79,13 @@ def answer_claim(
     if not atomic_claims:
         # No verifiable claims could be extracted (e.g. the statement was empty,
         # non-factual, or the model returned nothing). Report this honestly rather
-        # than crashing on the confidence math or vacuously declaring "supported"
-        # (an all([]) over zero claims is True).
+        # than vacuously declaring "supported" (an all([]) over zero claims is True).
         return {
             "original_statement": statement,
             "atomic_claims": [],
             "overall_assessment": "insufficient_evidence",
             "claim_assessments": [],
             "limitations": LIMITATIONS,
-            "confidence": 0.0,
         }
 
     print(f"Decomposed into {len(atomic_claims)} atomic claims:")
@@ -118,9 +113,12 @@ def answer_claim(
             primary_evidence_text = format_evidence_for_prompt(chunks)
             peer_evidence_text = ""
 
+        # Always feed all banks' metrics so the peer cross-section (the "is this rate high or
+        # low?" anchor) is present even on a bank-specific claim; the primary/peer split of
+        # the qualitative evidence is preserved separately above.
         metrics_text = format_metrics_for_prompt(
             metrics_df,
-            tickers=[ticker] if ticker else DEFAULT_TICKERS,
+            tickers=DEFAULT_TICKERS,
             metric_names=None,
         )
 
@@ -135,9 +133,6 @@ def answer_claim(
         claim_assessments.append(assessment)
 
     overall_assessment = _overall_assessment(claim_assessments)
-    confidence = sum(
-        CONFIDENCE_BY_ASSESSMENT.get(assessment.get("assessment"), 0.2) for assessment in claim_assessments
-    ) / len(claim_assessments)
 
     return {
         "original_statement": statement,
@@ -145,7 +140,6 @@ def answer_claim(
         "overall_assessment": overall_assessment,
         "claim_assessments": claim_assessments,
         "limitations": LIMITATIONS,
-        "confidence": round(confidence, 2),
     }
 
 
