@@ -105,10 +105,14 @@ class EvidenceRetriever:
         """Retrieves evidence for `claim`, plus counter-evidence from contradiction-
         expansion queries (see `_contradiction_queries_for_claim`), deduped by chunk_id
         and merged into one ranked list."""
-        all_results = self.retrieve(claim, n_results=n_results, tickers=tickers, risk_theme=risk_theme)
+        all_results = self.retrieve(
+            claim, n_results=n_results, tickers=tickers, risk_theme=risk_theme
+        )
 
         for contradiction_query in _contradiction_queries_for_claim(claim):
-            all_results += self.retrieve(contradiction_query, n_results=4, tickers=tickers, risk_theme=risk_theme)
+            all_results += self.retrieve(
+                contradiction_query, n_results=4, tickers=tickers, risk_theme=risk_theme
+            )
 
         deduped: dict[str, dict] = {}
         for result in all_results:
@@ -118,6 +122,36 @@ class EvidenceRetriever:
 
         merged = sorted(deduped.values(), key=lambda result: result["score"], reverse=True)
         return merged[: n_results * 2]
+
+    def retrieve_with_peer_context(
+        self,
+        claim: str,
+        primary_ticker: str,
+        risk_theme: str | None = None,
+        n_primary: int = 6,
+        n_peer: int = 3,
+    ) -> dict[str, list[dict]]:
+        """Two-pass retrieval for a bank-specific claim: validates primarily against
+        the bank's own formal filings (with contradiction expansion), then adds
+        lighter peer-bank context separately -- one retrieve() call per peer, no
+        contradiction pass -- so peer evidence doesn't dilute or get conflated
+        with the primary bank's own evidence during assessment."""
+        peer_tickers = [ticker for ticker in ["JPM", "BAC", "C"] if ticker != primary_ticker]
+
+        primary_chunks = self.retrieve_with_contradiction(
+            claim,
+            n_results=n_primary,
+            tickers=[primary_ticker],
+            risk_theme=risk_theme,
+        )
+
+        peer_chunks = []
+        for peer in peer_tickers:
+            peer_chunks.extend(
+                self.retrieve(claim, n_results=n_peer, tickers=[peer], risk_theme=risk_theme)
+            )
+
+        return {"primary": primary_chunks, "peer": peer_chunks}
 
     def retrieve_per_bank(
         self,
@@ -129,13 +163,18 @@ class EvidenceRetriever:
         """Runs the same query once per ticker, each filtered to that bank only --
         used by peer comparison so every bank gets an equal-sized evidence set."""
         return {
-            ticker: self.retrieve(query, n_results=n_results_per_bank, tickers=[ticker], risk_theme=risk_theme)
+            ticker: self.retrieve(
+                query, n_results=n_results_per_bank, tickers=[ticker], risk_theme=risk_theme
+            )
             for ticker in tickers
         }
 
 
-def format_evidence_for_prompt(chunks: list[dict]) -> str:
-    """Formats retrieved chunks as numbered, citation-ready blocks for prompt inclusion."""
+def format_evidence_for_prompt(chunks: list[dict], label: str | None = None) -> str:
+    """Formats retrieved chunks as numbered, citation-ready blocks for prompt
+    inclusion. An optional label prefixes the block with a "--- label ---"
+    header, used to keep primary vs. peer-bank evidence visually distinct."""
+    header = f"--- {label} ---\n" if label else ""
     blocks = []
     for index, chunk in enumerate(chunks, start=1):
         metadata = chunk["metadata"]
@@ -153,7 +192,7 @@ def format_evidence_for_prompt(chunks: list[dict]) -> str:
             f'    "{excerpt}..."'
         )
 
-    return "\n\n".join(blocks)
+    return header + "\n\n".join(blocks)
 
 
 if __name__ == "__main__":
