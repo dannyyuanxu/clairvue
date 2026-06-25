@@ -81,12 +81,26 @@ def answer_claim(
 
     claim_assessments = []
     for claim in atomic_claims:
-        chunks = retriever.retrieve_with_contradiction(
-            claim,
-            tickers=[ticker] if ticker else None,
-            risk_theme=risk_theme,
-        )
-        evidence_text = format_evidence_for_prompt(chunks)
+        if ticker:
+            # Bank-specific claim: validate primarily against the bank's own
+            # filings, then add peer-bank evidence as separate, clearly labeled
+            # context rather than mixing all three banks' evidence together.
+            evidence = retriever.retrieve_with_peer_context(
+                claim, primary_ticker=ticker, risk_theme=risk_theme
+            )
+            primary_evidence_text = format_evidence_for_prompt(
+                evidence["primary"], label="Primary evidence (bank's own filings)"
+            )
+            peer_evidence_text = format_evidence_for_prompt(
+                evidence["peer"], label="Peer bank context"
+            )
+        else:
+            # General statement, no specific bank named: treat all banks' evidence equally.
+            chunks = retriever.retrieve_with_contradiction(claim, risk_theme=risk_theme)
+            primary_evidence_text = format_evidence_for_prompt(chunks)
+            peer_evidence_text = ""
+
+        evidence_text = f"{primary_evidence_text}\n\n{peer_evidence_text}".strip()
         metrics_text = format_metrics_for_prompt(
             metrics_df,
             tickers=[ticker] if ticker else DEFAULT_TICKERS,
@@ -134,8 +148,22 @@ def compare_peers(
     return llm_client.chat_json(peer_comparison_messages(question, bank_evidence, metrics_text, tickers))
 
 
-if __name__ == "__main__":
+def _main() -> None:
+    import argparse
     import json
 
-    result = answer_claim("Consumer credit remains resilient and losses are normalizing.")
+    arg_parser = argparse.ArgumentParser()
+    arg_parser.add_argument(
+        "--statement",
+        default="Consumer credit remains resilient and losses are normalizing.",
+    )
+    arg_parser.add_argument("--ticker", default=None, choices=[*DEFAULT_TICKERS, None])
+    arg_parser.add_argument("--risk-theme", default="consumer_credit")
+    args = arg_parser.parse_args()
+
+    result = answer_claim(args.statement, ticker=args.ticker, risk_theme=args.risk_theme)
     print(json.dumps(result, indent=2))
+
+
+if __name__ == "__main__":
+    _main()
