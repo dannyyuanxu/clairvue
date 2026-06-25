@@ -13,6 +13,7 @@ import time
 from collections import Counter
 from pathlib import Path
 
+from src.config import settings
 from src.llm_client import LLMClient
 
 FILING_INDEX_PATH = "data/raw/sec_filings/filing_index.csv"
@@ -305,7 +306,9 @@ def enrich_chunks(chunks: list[dict]) -> list[dict]:
     retrieval time. Cached per chunk_id (data/processed/enrichment_cache.jsonl)
     so re-running after an interruption doesn't redo already-enriched chunks."""
     cache = _load_enrichment_cache()
-    llm_client = LLMClient()
+    # Enrichment is a high-volume, low-stakes summarization step -- run it on the cheaper
+    # ENRICHMENT_MODEL rather than the (possibly larger) LLM_MODEL used for assessment.
+    llm_client = LLMClient(model=settings.ENRICHMENT_MODEL)
 
     pending = [chunk for chunk in chunks if not chunk["metadata"].get("enriched")]
     print(f"Enriching {len(pending)} chunks ({len(cache)} already cached)...")
