@@ -41,6 +41,8 @@ INDEX_FIELDNAMES = [
 
 
 def main() -> None:
+    """Fetches the 15 target 10-K/10-Q filings for all 3 banks, skipping any whose
+    local HTML file already exists, and writes data/raw/sec_filings/filing_index.csv."""
     if not settings.SEC_USER_AGENT:
         raise RuntimeError("SEC_USER_AGENT must be set (see .env.example) before downloading filings.")
 

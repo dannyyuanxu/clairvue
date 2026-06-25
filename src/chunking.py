@@ -74,6 +74,9 @@ def _token_count(text: str) -> int:
 
 
 def _tag_risk_theme(text: str) -> str:
+    """Keyword-matches a chunk to a risk theme; consumer_credit takes precedence
+    over commercial_real_estate when both match, since it's the project's primary
+    theme -- anything else falls back to "general"."""
     lowered = f" {text.lower()} "
     if any(keyword in lowered for keyword in CONSUMER_CREDIT_KEYWORDS):
         return "consumer_credit"
@@ -83,6 +86,8 @@ def _tag_risk_theme(text: str) -> str:
 
 
 def _reporting_period(primary_document: str, fallback_filing_date: str) -> str:
+    """Derives "YYYY-Qn" from the period-end date embedded in the primary document's
+    filename; falls back to the filing date itself if that pattern isn't present."""
     match = re.search(r"(\d{8})\.\w+$", primary_document)
     date_digits = match.group(1) if match else fallback_filing_date.replace("-", "")
     year, month = int(date_digits[:4]), int(date_digits[4:6])
@@ -114,6 +119,9 @@ def _split_by_headers(markdown_text: str) -> list[tuple[str, str]]:
 
 
 def _merge_splits(pieces: list[str], separator: str, chunk_size: int, overlap: int) -> list[str]:
+    """Greedily re-joins small pieces up to chunk_size, carrying `overlap` tokens
+    of trailing context into the next chunk (LangChain-style recursive splitter,
+    hand-rolled per this project's no-framework constraint)."""
     merged: list[str] = []
     current: list[str] = []
     current_tokens = 0
@@ -166,6 +174,10 @@ def _recursive_split(text: str, chunk_size: int, overlap: int, separators: list[
 
 
 def _build_filing_chunks(row: dict) -> tuple[list[dict], int]:
+    """Splits one filing's cached parsed text into header-aware chunks, recursively
+    splitting any section over MAX_SECTION_TOKENS. Returns (chunks, filtered_count)
+    where filtered_count is how many candidate chunks were dropped for being under
+    MIN_CHUNK_TOKENS (too short to carry real meaning)."""
     ticker, company, form = row["ticker"], row["company"], row["form"]
     filing_date = row["filing_date"]
     period = _reporting_period(row["primary_document"], filing_date)
@@ -224,6 +236,8 @@ def _build_filing_chunks(row: dict) -> tuple[list[dict], int]:
 
 
 def _build_statement_chunks(path: str = STATEMENTS_CSV_PATH) -> list[dict]:
+    """One chunk per hand-curated management statement -- each is short enough
+    that no header/recursive splitting is needed."""
     chunks = []
     counters: dict[str, int] = {}
 
@@ -286,6 +300,10 @@ def _enrichment_user_message(chunk: dict) -> str:
 
 
 def enrich_chunks(chunks: list[dict]) -> list[dict]:
+    """Prepends an LLM-generated context prefix (company/filing/section summary)
+    to each chunk's text, so a chunk reads sensibly even out of context at
+    retrieval time. Cached per chunk_id (data/processed/enrichment_cache.jsonl)
+    so re-running after an interruption doesn't redo already-enriched chunks."""
     cache = _load_enrichment_cache()
     llm_client = LLMClient()
 
@@ -322,6 +340,9 @@ def enrich_chunks(chunks: list[dict]) -> list[dict]:
 
 
 def chunk_all_filings(enrich: bool = False) -> list[dict]:
+    """Main entry point: chunks every filing in the index plus all management
+    statements, optionally enriches them, and writes the combined result to
+    data/processed/chunks.jsonl."""
     with open(FILING_INDEX_PATH, newline="") as f:
         filing_rows = list(csv.DictReader(f))
 

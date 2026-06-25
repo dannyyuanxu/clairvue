@@ -58,6 +58,8 @@ def _build_where_filter(
 
 
 def _contradiction_queries_for_claim(claim: str) -> list[str]:
+    """Maps positive-sentiment keywords in a claim to counter-evidence search queries,
+    so retrieval doesn't only surface evidence that agrees with the claim's own phrasing."""
     lowered = claim.lower()
     contradiction_queries: list[str] = []
     for keywords, queries in CONTRADICTION_KEYWORD_RULES:
@@ -67,6 +69,9 @@ def _contradiction_queries_for_claim(claim: str) -> list[str]:
 
 
 class EvidenceRetriever:
+    """Primary retrieval interface: embeds a query, applies metadata filters, and
+    queries the ChromaDB collection. Owns one Chroma collection handle + one LLMClient."""
+
     def __init__(self) -> None:
         self.collection = load_collection()
         self.llm_client = LLMClient()
@@ -80,6 +85,7 @@ class EvidenceRetriever:
         source_type: str | None = None,
         filing_type: str | None = None,
     ) -> list[dict]:
+        """Embeds `query` and runs a metadata-filtered similarity search."""
         query_embedding = self.llm_client.embed([query])[0]
         where = _build_where_filter(tickers, risk_theme, source_type, filing_type)
         return chroma_query(self.collection, query_embedding, n_results=n_results, where=where)
@@ -91,6 +97,9 @@ class EvidenceRetriever:
         tickers: list[str] | None = None,
         risk_theme: str | None = "consumer_credit",
     ) -> list[dict]:
+        """Retrieves evidence for `claim`, plus counter-evidence from contradiction-
+        expansion queries (see `_contradiction_queries_for_claim`), deduped by chunk_id
+        and merged into one ranked list."""
         all_results = self.retrieve(claim, n_results=n_results, tickers=tickers, risk_theme=risk_theme)
 
         for contradiction_query in _contradiction_queries_for_claim(claim):
@@ -112,6 +121,8 @@ class EvidenceRetriever:
         n_results_per_bank: int = 5,
         risk_theme: str | None = "consumer_credit",
     ) -> dict[str, list[dict]]:
+        """Runs the same query once per ticker, each filtered to that bank only --
+        used by peer comparison so every bank gets an equal-sized evidence set."""
         return {
             ticker: self.retrieve(query, n_results=n_results_per_bank, tickers=[ticker], risk_theme=risk_theme)
             for ticker in tickers
@@ -119,6 +130,7 @@ class EvidenceRetriever:
 
 
 def format_evidence_for_prompt(chunks: list[dict]) -> str:
+    """Formats retrieved chunks as numbered, citation-ready blocks for prompt inclusion."""
     blocks = []
     for index, chunk in enumerate(chunks, start=1):
         metadata = chunk["metadata"]

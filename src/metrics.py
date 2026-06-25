@@ -120,6 +120,9 @@ def _select_best_fact(facts: list[dict]) -> dict:
 
 
 def fetch_xbrl_metric(cik: str, concept: str, ticker: str, company: str) -> list[dict]:
+    """Pulls one concept's quarterly facts for one bank in [START_DATE, END_DATE],
+    deduplicated first by exact (start, end) period (keep latest filed), then by
+    end date when multiple durations exist for the same end (keep shortest)."""
     facts = _get_company_facts(ticker, cik)
 
     concept_data = facts.get("facts", {}).get("us-gaap", {}).get(concept)
@@ -189,6 +192,11 @@ def _build_total_loans_rows(ticker: str, cik: str, company: str) -> list[dict]:
 
 
 def build_metrics_table() -> pd.DataFrame:
+    """Builds the full metrics table for all banks x all metrics. For each pair,
+    tries every candidate concept (see METRIC_DEFINITIONS) and keeps whichever
+    yields the most in-window rows, rather than stopping at the first match --
+    concept coverage is bank-specific post-CECL, so "first non-empty" can silently
+    pick a sparse/wrong concept over a fully-covered one."""
     rows = []
 
     for metric_name, candidates, comparability_note in METRIC_DEFINITIONS:
@@ -259,6 +267,8 @@ def build_metrics_table() -> pd.DataFrame:
 
 
 def _print_coverage_check(df: pd.DataFrame) -> None:
+    """Prints row count + period range per (ticker, metric); warns below MIN_EXPECTED_ROWS
+    so a silently-wrong or sparse concept can't hide in the output."""
     print("\n--- Coverage check (expect >= 4 rows per ticker/metric, one per quarter) ---")
     for (ticker, metric_name), group in df.groupby(["ticker", "metric_name"], sort=True):
         valid = group[group["period_end"].notna()]
@@ -278,6 +288,9 @@ def _print_coverage_check(df: pd.DataFrame) -> None:
 
 
 def calculate_period_changes(df: pd.DataFrame) -> pd.DataFrame:
+    """Adds qoq_change_pct/yoy_change_pct (4 rows back = 1 year, since each ticker/metric
+    group has one row per quarter). Uses abs() in the denominator so the sign is correct
+    even if a prior-period value were negative."""
     df = df.sort_values(["ticker", "metric_name", "period_end"]).reset_index(drop=True)
 
     grouped_value = df.groupby(["ticker", "metric_name"])["value"]
@@ -290,6 +303,7 @@ def calculate_period_changes(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def load_metrics(path: str = METRICS_CSV_PATH) -> pd.DataFrame:
+    """Loads the curated metrics table -- the public entry point other modules use."""
     return pd.read_csv(path)
 
 

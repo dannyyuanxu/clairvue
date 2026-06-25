@@ -13,11 +13,15 @@ EVAL_RESULTS_JSON_PATH = "outputs/eval_results.json"
 
 
 def load_eval_questions(path: str = EVAL_QUESTIONS_CSV_PATH) -> list[dict]:
+    """Loads the hand-curated eval question set."""
     with open(path) as f:
         return list(csv.DictReader(f))
 
 
 def run_evaluation(questions_path: str = EVAL_QUESTIONS_CSV_PATH, output_path: str = EVAL_RESULTS_JSON_PATH) -> None:
+    """Main entry point: dispatches each question to answer_claim/compare_peers/
+    retriever.retrieve by its `mode` column, and saves all results as JSON for
+    manual scoring (see outputs/eval_scoring_template.csv)."""
     questions = load_eval_questions(questions_path)
     retriever = EvidenceRetriever()
 

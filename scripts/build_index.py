@@ -42,6 +42,9 @@ def _timed_step(step_num: int, fn):
 
 
 def run_pipeline(from_step: int = 1) -> None:
+    """Main entry point: runs steps 1-5 in order, skipping steps before from_step.
+    Steps 4-5 are tightly coupled (5 needs 4's output), so skipping step 4 loads
+    its output from disk instead of recomputing it -- see the from_step<=4 branch."""
     if from_step not in STEP_NAMES:
         raise ValueError(f"--from-step must be between 1 and {len(STEP_NAMES)}, got {from_step}")
 

@@ -38,6 +38,9 @@ _BOILERPLATE_LINE_PATTERNS = [
 
 
 def _render_element(element) -> list[str]:
+    """Converts one sec-parser semantic element to markdown lines, recursing into
+    composite elements; titles become '#'/'##'/'###' headers, tables go through
+    markdownify, and table-of-contents/irrelevant/image elements are dropped."""
     import sec_parser as sp
     from sec_parser.semantic_elements.table_element.table_of_contents_element import (
         TableOfContentsElement,
@@ -89,6 +92,9 @@ def _strip_hidden_ixbrl_header(html: str) -> str:
 
 
 def _parse_with_sec_parser(html: str) -> str:
+    """Primary parse path: structures the filing semantically (headings, tables,
+    boilerplate) via sec-parser. Raises on malformed HTML it can't classify --
+    callers should catch and fall back to `_parse_with_bs4`."""
     import sec_parser as sp
 
     with warnings.catch_warnings():
@@ -102,6 +108,9 @@ def _parse_with_sec_parser(html: str) -> str:
 
 
 def _parse_with_bs4(html: str) -> str:
+    """Fallback parse path when sec-parser can't classify a filing: a generic
+    BeautifulSoup + markdownify conversion with no section/heading awareness,
+    but that always produces usable plain text."""
     soup = BeautifulSoup(html, "lxml")
     for tag in soup(["script", "style"]):
         tag.decompose()
@@ -119,6 +128,8 @@ def _remove_boilerplate(text: str) -> str:
 
 
 def parse_filing(html_path: str, output_dir: str) -> str:
+    """Parses one raw filing HTML to cleaned markdown, trying sec-parser first and
+    falling back to BeautifulSoup if it raises. Writes the result and returns its path."""
     html_path = Path(html_path)
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -139,6 +150,9 @@ def parse_filing(html_path: str, output_dir: str) -> str:
 
 
 def parse_all_filings(filing_index_path: str = DEFAULT_FILING_INDEX_PATH, force_reparse: bool = False) -> list[dict]:
+    """Main entry point: parses every filing in the index, skipping any whose
+    cached markdown already exists unless force_reparse is set (stage 1 of the
+    two-stage cache -- filing HTML doesn't change, so this is safe to skip)."""
     output_dir = Path(DEFAULT_TEXT_OUTPUT_DIR)
     results = []
 
@@ -170,6 +184,11 @@ def parse_all_filings(filing_index_path: str = DEFAULT_FILING_INDEX_PATH, force_
 
 
 def check_extraction_quality(text_path: str) -> dict:
+    """Counts occurrences of each QUALITY_CHECK_TERMS in the parsed text -- a coarse
+    smoke test, not a quality score. The caller (`_main`) flags a filing as suspicious
+    if 'provision for credit loss' has zero hits, since every filing in this corpus
+    should mention it somewhere; a zero usually means extraction broke, not that the
+    term is genuinely absent."""
     text = Path(text_path).read_text(encoding="utf-8").lower()
     return {term: text.count(term) for term in QUALITY_CHECK_TERMS}
 

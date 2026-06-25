@@ -132,6 +132,8 @@ def run_demos() -> dict:
 
 
 def main() -> None:
+    """`python -m src.demo` entry point: runs all 3 scenarios, saves them to
+    outputs/sample_answers.json, and pretty-prints each one."""
     results = run_demos()
 
     OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)

@@ -56,6 +56,8 @@ def embed_chunks(chunks: list[dict], llm_client: LLMClient) -> list[list[float]]
 
 
 def validate_embedding_model(metadata_list: list[dict]) -> None:
+    """Warns if any cached vector's embedding_model differs from the current
+    EMBEDDING_MODEL setting -- Chroma itself can't detect this mismatch."""
     current_model = settings.EMBEDDING_MODEL
     mismatched_models = {
         metadata.get("embedding_model")
@@ -70,6 +72,8 @@ def validate_embedding_model(metadata_list: list[dict]) -> None:
 
 
 def get_embeddings(rebuild: bool = False) -> tuple:
+    """Main entry point: returns cached (embeddings, metadata_list) if valid and
+    rebuild=False, otherwise re-embeds every chunk and overwrites the cache."""
     chunks = _load_chunks()
 
     if not rebuild:

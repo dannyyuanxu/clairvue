@@ -74,6 +74,7 @@ def get_filing_index(cik: str, forms: set[str], start_date: str, end_date: str) 
 
 
 def download_filing(filing_url: str, dest_path: str) -> str:
+    """Downloads one filing's primary document HTML to dest_path."""
     response = requests.get(filing_url, headers=_sec_headers(), timeout=REQUEST_TIMEOUT_SECONDS)
     response.raise_for_status()
     time.sleep(RATE_LIMIT_SECONDS)
@@ -83,6 +84,9 @@ def download_filing(filing_url: str, dest_path: str) -> str:
 
 
 def get_xbrl_facts(cik: str) -> dict:
+    """Fetches the full companyfacts JSON (all XBRL concepts) for one CIK, uncached --
+    callers should cache this themselves (see metrics.py:_get_company_facts), since
+    the payload is 5-20MB and the same bank is queried for many different concepts."""
     response = requests.get(
         EDGAR_XBRL_FACTS_URL.format(cik=cik), headers=_sec_headers(), timeout=XBRL_FACTS_TIMEOUT_SECONDS
     )

@@ -13,6 +13,9 @@ CHAT_RATE_LIMIT_SECONDS = 1.0
 
 
 class LLMClient:
+    """Sole gateway to the Mistral SDK -- nothing else in the codebase imports
+    `mistralai` directly, so a model or provider swap is a one-file change."""
+
     def __init__(self) -> None:
         self.client = Mistral(api_key=settings.MISTRAL_API_KEY)
         self.embedding_model = settings.EMBEDDING_MODEL
@@ -39,14 +42,17 @@ class LLMClient:
                 time.sleep(sleep_seconds)
 
     def embed(self, texts: list[str]) -> list[list[float]]:
+        """Embeds a batch of texts with the configured embedding model."""
         response = self.client.embeddings.create(model=self.embedding_model, inputs=texts)
         return [item.embedding for item in response.data]
 
     def chat(self, messages: list[dict], temperature: float = 0.0) -> str:
+        """Free-text chat completion."""
         response = self._complete(model=self.llm_model, messages=messages, temperature=temperature)
         return response.choices[0].message.content
 
     def chat_json(self, messages: list[dict]) -> dict:
+        """Chat completion constrained to return valid JSON, pre-parsed into a dict."""
         response = self._complete(
             model=self.llm_model,
             messages=messages,

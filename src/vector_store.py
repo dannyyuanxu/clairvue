@@ -26,6 +26,7 @@ def _sanitize_metadata(metadata: dict) -> dict:
 
 
 def build_index(embeddings: np.ndarray, metadata_list: list[dict]) -> None:
+    """Upserts all chunks into the ChromaDB collection in batches of UPSERT_BATCH_SIZE."""
     client = _get_client()
     collection = client.get_or_create_collection(
         name=COLLECTION_NAME,
@@ -47,6 +48,7 @@ def build_index(embeddings: np.ndarray, metadata_list: list[dict]) -> None:
 
 
 def load_collection() -> chromadb.Collection:
+    """Loads the existing collection; raises if `--build` hasn't been run yet."""
     client = _get_client()
     existing_names = {collection.name for collection in client.list_collections()}
     if COLLECTION_NAME not in existing_names:
@@ -63,6 +65,8 @@ def query(
     n_results: int = 8,
     where: dict | None = None,
 ) -> list[dict]:
+    """Runs a single-query similarity search and returns hits ranked by score
+    descending (score = 1 - cosine distance, so higher is more similar)."""
     results = collection.query(
         query_embeddings=[query_embedding],
         n_results=n_results,
@@ -73,7 +77,10 @@ def query(
     hits = [
         {"chunk_id": chunk_id, "text": text, "score": 1 - distance, "metadata": metadata}
         for chunk_id, text, metadata, distance in zip(
-            results["ids"][0], results["documents"][0], results["metadatas"][0], results["distances"][0]
+            results["ids"][0],
+            results["documents"][0],
+            results["metadatas"][0],
+            results["distances"][0],
         )
     ]
     hits.sort(key=lambda hit: hit["score"], reverse=True)
@@ -81,16 +88,19 @@ def query(
 
 
 def filter_by_ticker(tickers: list[str]) -> dict:
+    """Builds a Chroma `where` clause matching one or more tickers."""
     if len(tickers) == 1:
         return {"ticker": tickers[0]}
     return {"ticker": {"$in": tickers}}
 
 
 def filter_by_theme(theme: str) -> dict:
+    """Builds a Chroma `where` clause matching a single risk theme."""
     return {"risk_theme": theme}
 
 
 def combine_filters(*filters) -> dict:
+    """Combines multiple Chroma `where` clauses with AND."""
     return {"$and": list(filters)}
 
 
@@ -102,7 +112,7 @@ def _main() -> None:
 
     if args.build:
         embeddings = np.load(EMBEDDINGS_PATH)
-        with open(VECTOR_METADATA_PATH) as f:
+        with open(VECTOR_METADATA_PATH, encoding="utf-8") as f:
             metadata_list = [json.loads(line) for line in f if line.strip()]
         build_index(embeddings, metadata_list)
 

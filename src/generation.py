@@ -45,6 +45,11 @@ def _get_metrics_df() -> pd.DataFrame:
 
 
 def _overall_assessment(claim_assessments: list[dict]) -> str:
+    """Rolls up per-claim verdicts into one label: all-supported wins outright,
+    a contradicted majority wins outright, and everything else -- including any
+    mix containing insufficient_evidence -- collapses to partially_supported.
+    (This means a compound claim with mostly-insufficient sub-claims will not
+    surface as "insufficient_evidence" at the top level -- see the eval notes.)"""
     verdicts = [assessment.get("assessment") for assessment in claim_assessments]
 
     if all(verdict == "supported" for verdict in verdicts):
