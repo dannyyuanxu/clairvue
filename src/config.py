@@ -11,6 +11,11 @@ class Settings(BaseSettings):
     MISTRAL_API_KEY: str = ""
     EMBEDDING_MODEL: str = "mistral-embed"
     LLM_MODEL: str = "mistral-small-latest"
+    # Model used only for chunk context enrichment (a high-volume, low-stakes summarization
+    # step run during the local index build). Defaulted to a small/cheap model independently
+    # of LLM_MODEL so the build stays cheap even when LLM_MODEL is bumped to a larger model
+    # for assessment quality. Not used at demo/query time (enrichment doesn't run then).
+    ENRICHMENT_MODEL: str = "mistral-small-latest"
     CHROMA_PERSIST_DIR: str = "./data/processed/chroma_db"
 
     # Only needed at ingestion time — defaulted so this module can be

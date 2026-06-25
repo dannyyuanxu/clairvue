@@ -16,10 +16,14 @@ class LLMClient:
     """Sole gateway to the Mistral SDK -- nothing else in the codebase imports
     `mistralai` directly, so a model or provider swap is a one-file change."""
 
-    def __init__(self) -> None:
+    def __init__(self, model: str | None = None) -> None:
+        """`model` overrides the chat model for this client instance (defaults to
+        settings.LLM_MODEL). Used to run a cheaper model for a specific call-type --
+        e.g. enrichment passes settings.ENRICHMENT_MODEL -- without touching call sites
+        or affecting the default demo/assessment model."""
         self.client = Mistral(api_key=settings.MISTRAL_API_KEY)
         self.embedding_model = settings.EMBEDDING_MODEL
-        self.llm_model = settings.LLM_MODEL
+        self.llm_model = model or settings.LLM_MODEL
 
     def _with_retry(self, fn):
         """Throttles to ~1 request/sec proactively, then retries on rate limits
