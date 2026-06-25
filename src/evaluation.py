@@ -1,5 +1,6 @@
 """Runs eval_questions.csv through the live pipeline and saves results for manual scoring."""
 
+import argparse
 import csv
 import json
 import time
@@ -61,5 +62,13 @@ def run_evaluation(questions_path: str = EVAL_QUESTIONS_CSV_PATH, output_path: s
     print(f"\nRan {len(questions)} questions in {elapsed:.1f}s. Saved results to {output_path}")
 
 
+def _main() -> None:
+    arg_parser = argparse.ArgumentParser(description="Run the eval question set through the live pipeline.")
+    arg_parser.add_argument("--questions-path", default=EVAL_QUESTIONS_CSV_PATH)
+    arg_parser.add_argument("--output-path", default=EVAL_RESULTS_JSON_PATH)
+    args = arg_parser.parse_args()
+    run_evaluation(questions_path=args.questions_path, output_path=args.output_path)
+
+
 if __name__ == "__main__":
-    run_evaluation()
+    _main()

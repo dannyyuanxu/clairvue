@@ -4,6 +4,7 @@ Also runnable standalone: generates outputs/sample_answers.json, a cached fallba
 in case the live API is slow or unavailable during the interview.
 """
 
+import argparse
 import json
 import os
 import sys
@@ -134,6 +135,10 @@ def run_demos() -> dict:
 def main() -> None:
     """`python -m src.demo` entry point: runs all 3 scenarios, saves them to
     outputs/sample_answers.json, and pretty-prints each one."""
+    # No options today, but parse anyway so a stray/typo'd flag errors loudly
+    # instead of being silently ignored.
+    argparse.ArgumentParser(description=main.__doc__).parse_args()
+
     results = run_demos()
 
     OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)

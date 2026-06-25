@@ -73,7 +73,21 @@ def answer_claim(
         metrics_df = _get_metrics_df()
 
     decomposition = llm_client.chat_json(decompose_claim_messages(statement))
-    atomic_claims = decomposition["atomic_claims"]
+    atomic_claims = decomposition.get("atomic_claims", [])
+
+    if not atomic_claims:
+        # No verifiable claims could be extracted (e.g. the statement was empty,
+        # non-factual, or the model returned nothing). Report this honestly rather
+        # than crashing on the confidence math or vacuously declaring "supported"
+        # (an all([]) over zero claims is True).
+        return {
+            "original_statement": statement,
+            "atomic_claims": [],
+            "overall_assessment": "insufficient_evidence",
+            "claim_assessments": [],
+            "limitations": LIMITATIONS,
+            "confidence": 0.0,
+        }
 
     print(f"Decomposed into {len(atomic_claims)} atomic claims:")
     for claim in atomic_claims:
@@ -152,12 +166,14 @@ def _main() -> None:
     import argparse
     import json
 
-    arg_parser = argparse.ArgumentParser()
+    arg_parser = argparse.ArgumentParser(description="Validate a management statement against filings.")
     arg_parser.add_argument(
         "--statement",
         default="Consumer credit remains resilient and losses are normalizing.",
     )
-    arg_parser.add_argument("--ticker", default=None, choices=[*DEFAULT_TICKERS, None])
+    # Omit --ticker for a general (all-banks) statement; pass one to validate a
+    # bank-specific claim primarily against that bank's own filings.
+    arg_parser.add_argument("--ticker", default=None, choices=DEFAULT_TICKERS)
     arg_parser.add_argument("--risk-theme", default="consumer_credit")
     args = arg_parser.parse_args()
 
