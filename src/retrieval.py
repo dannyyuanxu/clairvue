@@ -39,7 +39,11 @@ def _build_where_filter(
     risk_theme: str | None = None,
     source_type: str | None = None,
     filing_type: str | None = None,
-) -> dict | None:
+) -> dict:
+    """Builds the Chroma `where` clause. A management statement can't validate
+    itself, so source_type == "management_statement" is excluded by default --
+    unless source_type explicitly requests it, e.g. a caller deliberately
+    retrieving only management statements."""
     filters = []
     if tickers:
         filters.append(filter_by_ticker(tickers))
@@ -50,8 +54,9 @@ def _build_where_filter(
     if filing_type:
         filters.append({"filing_type": filing_type})
 
-    if not filters:
-        return None
+    if source_type != "management_statement":
+        filters.append({"source_type": {"$ne": "management_statement"}})
+
     if len(filters) == 1:
         return filters[0]
     return combine_filters(*filters)
