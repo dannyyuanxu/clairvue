@@ -64,16 +64,34 @@ def answer_claim(
     ticker: str | None = None,
     risk_theme: str = "consumer_credit",
     metrics_df: pd.DataFrame | None = None,
+    verbose: bool = False,
 ) -> dict:
     """Full claim validation pipeline: decompose into atomic claims, then assess
-    each one independently against its own retrieved evidence and metrics."""
+    each one independently against its own retrieved evidence and metrics.
+
+    verbose=True additionally requests analyst_follow_up_questions in each per-claim
+    assessment; when False (default), those are omitted from the model's task entirely."""
     retriever = _get_retriever()
     llm_client = LLMClient()
     if metrics_df is None:
         metrics_df = _get_metrics_df()
 
     decomposition = llm_client.chat_json(decompose_claim_messages(statement))
-    atomic_claims = decomposition["atomic_claims"]
+    atomic_claims = decomposition.get("atomic_claims", [])
+
+    if not atomic_claims:
+        # No verifiable claims could be extracted (e.g. the statement was empty,
+        # non-factual, or the model returned nothing). Report this honestly rather
+        # than crashing on the confidence math or vacuously declaring "supported"
+        # (an all([]) over zero claims is True).
+        return {
+            "original_statement": statement,
+            "atomic_claims": [],
+            "overall_assessment": "insufficient_evidence",
+            "claim_assessments": [],
+            "limitations": LIMITATIONS,
+            "confidence": 0.0,
+        }
 
     print(f"Decomposed into {len(atomic_claims)} atomic claims:")
     for claim in atomic_claims:
@@ -100,14 +118,20 @@ def answer_claim(
             primary_evidence_text = format_evidence_for_prompt(chunks)
             peer_evidence_text = ""
 
-        evidence_text = f"{primary_evidence_text}\n\n{peer_evidence_text}".strip()
         metrics_text = format_metrics_for_prompt(
             metrics_df,
             tickers=[ticker] if ticker else DEFAULT_TICKERS,
             metric_names=None,
         )
 
-        assessment = llm_client.chat_json(assess_claim_messages(claim, evidence_text, metrics_text))
+        messages = assess_claim_messages(
+            claim=claim,
+            primary_evidence_text=primary_evidence_text,
+            metrics_text=metrics_text,
+            peer_evidence_text=peer_evidence_text,
+            verbose=verbose,
+        )
+        assessment = llm_client.chat_json(messages)
         claim_assessments.append(assessment)
 
     overall_assessment = _overall_assessment(claim_assessments)
@@ -152,16 +176,23 @@ def _main() -> None:
     import argparse
     import json
 
-    arg_parser = argparse.ArgumentParser()
+    arg_parser = argparse.ArgumentParser(description="Validate a management statement against filings.")
     arg_parser.add_argument(
         "--statement",
         default="Consumer credit remains resilient and losses are normalizing.",
     )
-    arg_parser.add_argument("--ticker", default=None, choices=[*DEFAULT_TICKERS, None])
+    # Omit --ticker for a general (all-banks) statement; pass one to validate a
+    # bank-specific claim primarily against that bank's own filings.
+    arg_parser.add_argument("--ticker", default=None, choices=DEFAULT_TICKERS)
     arg_parser.add_argument("--risk-theme", default="consumer_credit")
+    arg_parser.add_argument(
+        "--verbose", action="store_true", help="Also request analyst follow-up questions."
+    )
     args = arg_parser.parse_args()
 
-    result = answer_claim(args.statement, ticker=args.ticker, risk_theme=args.risk_theme)
+    result = answer_claim(
+        args.statement, ticker=args.ticker, risk_theme=args.risk_theme, verbose=args.verbose
+    )
     print(json.dumps(result, indent=2))
 
 

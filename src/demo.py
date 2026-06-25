@@ -4,6 +4,7 @@ Also runnable standalone: generates outputs/sample_answers.json, a cached fallba
 in case the live API is slow or unavailable during the interview.
 """
 
+import argparse
 import json
 import os
 import sys
@@ -57,8 +58,26 @@ def _truncate(text: str, length: int = 80) -> str:
     return text if len(text) <= length else text[: length - 3] + "..."
 
 
-def print_claim_assessment(result: dict) -> None:
-    """Pretty-print an answer_claim() result for the interview demo."""
+def _print_evidence_item(item: dict) -> None:
+    """Prints one evidence item using the LLM-extracted verbatim relevant_quote
+    (no truncation), falling back to the legacy excerpt field only if a quote
+    wasn't returned."""
+    quote = item.get("relevant_quote") or item.get("excerpt", "")
+    company = item.get("company", "")
+    filing_type = item.get("filing_type", "?")
+    period = item.get("period", "?")
+    print(f'    "{quote}"')
+    print(f"    Source: {company} ({filing_type} {period})")
+
+
+def print_claim_assessment(result: dict, verbose: bool = False) -> None:
+    """Pretty-print an answer_claim() result for the interview demo.
+
+    Each cited evidence item is shown via its verbatim relevant_quote (no truncation).
+    For bank-specific runs (peer_context present), primary evidence (the bank's own
+    filings) and peer-bank context are shown under separate headers. Follow-up questions
+    are shown only when verbose=True -- and are only present in the result at all when
+    answer_claim was itself run with verbose=True."""
     print("=" * 80)
     print(f"STATEMENT: {result['original_statement']}")
     print("=" * 80)
@@ -67,23 +86,32 @@ def print_claim_assessment(result: dict) -> None:
         assessment = claim_assessment.get("assessment", "insufficient_evidence")
         print(f"\n{_bracket_label(assessment, ASSESSMENT_LABELS)} {claim}")
 
-        evidence_items = (
+        # "Primary" = all of the primary bank's own evidence buckets; keeping
+        # contradictory/qualifying here matters so a contradicted verdict still
+        # shows the evidence that contradicts it.
+        primary_items = (
             claim_assessment.get("supporting_evidence", [])
             + claim_assessment.get("contradictory_evidence", [])
             + claim_assessment.get("qualifying_evidence", [])
         )
-        for evidence in evidence_items[:2]:
-            excerpt = _truncate(evidence.get("excerpt", ""), 80)
-            company = evidence.get("company", "")
-            filing_type = evidence.get("filing_type", "")
-            period = evidence.get("period", "")
-            print(f'    "{excerpt}" -- {company}, {filing_type} {period}')
+        peer_items = claim_assessment.get("peer_context", [])
 
-        follow_ups = claim_assessment.get("analyst_follow_up_questions", [])
-        if follow_ups:
-            print("    Follow-up questions:")
-            for question in follow_ups:
-                print(f"      - {question}")
+        if peer_items:
+            if primary_items:
+                print("  === PRIMARY EVIDENCE (bank's own filings) ===")
+                for item in primary_items:
+                    _print_evidence_item(item)
+            print("  === PEER BANK CONTEXT ===")
+            for item in peer_items:
+                _print_evidence_item(item)
+        else:
+            for item in primary_items:
+                _print_evidence_item(item)
+
+        if verbose and claim_assessment.get("analyst_follow_up_questions"):
+            print("  Follow-up questions:")
+            for question in claim_assessment["analyst_follow_up_questions"]:
+                print(f"    - {question}")
 
     print()
     print(f"OVERALL ASSESSMENT: {_bracket_label(result['overall_assessment'], ASSESSMENT_LABELS)}")
@@ -134,6 +162,10 @@ def run_demos() -> dict:
 def main() -> None:
     """`python -m src.demo` entry point: runs all 3 scenarios, saves them to
     outputs/sample_answers.json, and pretty-prints each one."""
+    # No options today, but parse anyway so a stray/typo'd flag errors loudly
+    # instead of being silently ignored.
+    argparse.ArgumentParser(description=main.__doc__).parse_args()
+
     results = run_demos()
 
     OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)

@@ -195,9 +195,16 @@ def format_evidence_for_prompt(chunks: list[dict], label: str | None = None) -> 
     return header + "\n\n".join(blocks)
 
 
-if __name__ == "__main__":
-    r = EvidenceRetriever()
-    results = r.retrieve("consumer credit losses normalizing", n_results=5)
+def _main() -> None:
+    import argparse
+
+    arg_parser = argparse.ArgumentParser(description="Smoke-test retrieval against the live index.")
+    arg_parser.add_argument("--query", default="consumer credit losses normalizing")
+    arg_parser.add_argument("--n-results", type=int, default=5)
+    args = arg_parser.parse_args()
+
+    retriever = EvidenceRetriever()
+    results = retriever.retrieve(args.query, n_results=args.n_results)
     for res in results:
         print(
             f"Score: {res['score']:.3f} | {res['metadata']['ticker']} "
@@ -206,3 +213,7 @@ if __name__ == "__main__":
         )
         print(f"  {res['text'][:120]}...")
         print()
+
+
+if __name__ == "__main__":
+    _main()
