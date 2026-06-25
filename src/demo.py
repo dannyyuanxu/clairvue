@@ -202,7 +202,8 @@ def claim_assessment_markdown(result: dict, verbose: bool = False) -> str:
     headline), then a compact metrics table, then evidence grouped as Supporting / Watch /
     Contradicting / Peer, plus what's missing. This is where the numeric interpretation the
     model produced actually becomes visible."""
-    overall_emoji, overall_label = ASSESSMENT_MD.get(result["overall_assessment"], ("⚪", result["overall_assessment"]))
+    overall = result["overall_assessment"]
+    overall_emoji, overall_label = ASSESSMENT_MD.get(overall, ("⚪", overall))
     lines = [
         "## Statement assessment",
         f"> {_md_inline(result['original_statement'])}",
@@ -236,8 +237,9 @@ def claim_assessment_markdown(result: dict, verbose: bool = False) -> str:
         if missing:
             lines += ["", "**Missing**", *[f"- {_md_inline(item)}" for item in missing]]
 
-        if verbose and claim_assessment.get("analyst_follow_up_questions"):
-            lines += ["", "**Follow-up questions**", *[f"- {_md_inline(q)}" for q in claim_assessment["analyst_follow_up_questions"]]]
+        follow_ups = claim_assessment.get("analyst_follow_up_questions") if verbose else None
+        if follow_ups:
+            lines += ["", "**Follow-up questions**", *[f"- {_md_inline(q)}" for q in follow_ups]]
 
     return "\n".join(lines)
 
@@ -260,9 +262,11 @@ def peer_comparison_markdown(result: dict) -> str:
     for bank in result.get("bank_assessments", []):
         direction = bank.get("risk_direction", "unclear")
         emoji, label = RISK_DIRECTION_MD.get(direction, ("⚪", direction))
+        ticker = _md_inline(bank.get("ticker", ""))
+        company = _md_inline(bank.get("company", ""))
         lines += [
             "---",
-            f"### {_md_inline(bank.get('ticker', ''))} — {_md_inline(bank.get('company', ''))} {emoji} {label}",
+            f"### {ticker} — {company} {emoji} {label}",
             _md_inline(bank.get("summary", "")),
         ]
         if bank.get("metrics_summary"):
@@ -272,13 +276,14 @@ def peer_comparison_markdown(result: dict) -> str:
             lines += ["", "**Evidence**", *[f"- {_md_inline(excerpt)}" for excerpt in excerpts]]
         lines.append("")
 
-    if result.get("strongest_deterioration_signal"):
-        lines += ["---", f"**Strongest deterioration signal:** {_md_inline(result['strongest_deterioration_signal'])}", ""]
+    signal = result.get("strongest_deterioration_signal")
+    if signal:
+        lines += ["---", f"**Strongest deterioration signal:** {_md_inline(signal)}", ""]
     if result.get("overall_summary"):
         lines += [f"**Overall:** {_md_inline(result['overall_summary'])}", ""]
     limitations = result.get("comparability_limitations", [])
     if limitations:
-        lines += ["**Comparability limitations**", *[f"- {_md_inline(limitation)}" for limitation in limitations]]
+        lines += ["**Comparability limitations**", *[f"- {_md_inline(lim)}" for lim in limitations]]
     return "\n".join(lines)
 
 
