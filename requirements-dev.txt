@@ -1,6 +1,0 @@
--r requirements.txt
-sec-parser
-pytest
-ipykernel
-tiktoken
-edgartools
