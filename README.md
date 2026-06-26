@@ -11,6 +11,19 @@ back to actual filings and pre-framed quantitative metrics.
 
 See [CLAUDE.md](./CLAUDE.md) for architecture, scope, and conventions.
 
+## Scope
+
+| Dimension | Coverage |
+|---|---|
+| **Banks** | JPMorgan Chase (JPM), Bank of America (BAC), Citigroup (C) |
+| **Periods** | Q4 2022 – Q4 2023 (5 quarters per bank, 15 filings total) |
+| **Filing types** | 10-K (annual) and 10-Q (quarterly) |
+| **Primary risk theme** | Consumer credit quality — charge-offs, delinquencies, provisions, "normalization" language |
+| **Secondary theme** | Commercial real estate (tagged, retrievable, but not the focus of the demo) |
+
+Claims about out-of-scope banks or periods return `insufficient_evidence` by design — the
+system abstains rather than fabricating an answer from an empty retrieval.
+
 ## Prerequisites
 
 - Python 3.10+
@@ -63,13 +76,47 @@ python scripts/build_index.py --from-step 5  # skip to ChromaDB load (embeddings
 Each stage is idempotent — a completed stage's cached output is reused unless you force a
 rebuild. `data/processed/metrics.csv` is pre-committed and does not need to be regenerated.
 
+## Usage
+
+The two top-level entry points are `answer_claim()` for single-bank claim validation and
+`compare_peers()` for cross-bank comparison:
+
+```python
+from src.generation import answer_claim, compare_peers
+
+# Validate a management statement against JPM's filings and XBRL metrics
+result = answer_claim(
+    "Consumer credit remains resilient, and losses are normalizing in line with expectations.",
+    ticker="JPM",
+    verbose=False,   # set True to include analyst follow-up questions
+)
+
+# Compare consumer credit evidence across all three banks
+result = compare_peers(
+    "Which of JPMorgan, Bank of America, and Citigroup shows the strongest evidence "
+    "of increasing consumer-credit pressure in 2023?",
+    risk_theme="consumer_credit",
+)
+```
+
+Both functions return a structured dict. Pass the result to the display helpers for
+Markdown-rendered output in a notebook:
+
+```python
+from src.demo import display_claim_assessment, display_peer_comparison
+
+display_claim_assessment(result, verbose=False)
+display_peer_comparison(result)
+```
+
 ## Running locally
 
 ```bash
-python -m src.demo   # runs all 3 demo scenarios and writes outputs/sample_answers.json
+python -m src.demo         # runs the 5 canned demo scenarios, writes outputs/sample_answers.json
+python -m src.evaluation   # batch-evaluates data/processed/eval_questions.csv, writes outputs/eval_results.json
 ```
 
-Or drive `answer_claim()` / `compare_peers()` interactively from `notebook.ipynb`.
+Or drive `answer_claim()` / `compare_peers()` interactively from `Clairvue_colab_demo.ipynb`.
 
 ## Google Colab
 
