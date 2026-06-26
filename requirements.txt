@@ -9,3 +9,5 @@ requests
 markdownify
 beautifulsoup4
 lxml
+sec-parser
+ipykernel
