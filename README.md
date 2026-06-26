@@ -38,14 +38,30 @@ Two small hand-curated files are pre-committed and ready to use:
 Everything else under `data/` (filing HTML, parsed text, chunks, embeddings, the ChromaDB index)
 must be built locally by running the pipeline below.
 
-## Pipeline
+## Building the index
+
+Run once before the first demo (or after adding new filings):
 
 ```bash
-python scripts/download_filings.py   # SEC EDGAR → data/raw/sec_filings/  (~15 filings)
-python scripts/build_index.py        # parse → chunk → embed → ChromaDB
+# Stage 1 — download raw filings from SEC EDGAR (~15 HTML files, ~10 min)
+python scripts/download_filings.py
+
+# Stage 2–5 — parse → chunk → embed → load into ChromaDB (~30–60 min, Mistral API calls)
+python scripts/build_index.py
 ```
 
-Each stage is idempotent — re-running after a partial failure picks up where it left off.
+`build_index.py` is resumable: if it fails mid-run, restart from the last completed stage
+rather than from scratch:
+
+```bash
+python scripts/build_index.py --from-step 2  # skip download, resume from text extraction
+python scripts/build_index.py --from-step 3  # skip download + extract, resume from chunking
+python scripts/build_index.py --from-step 4  # skip to embedding (chunks already built)
+python scripts/build_index.py --from-step 5  # skip to ChromaDB load (embeddings already built)
+```
+
+Each stage is idempotent — a completed stage's cached output is reused unless you force a
+rebuild. `data/processed/metrics.csv` is pre-committed and does not need to be regenerated.
 
 ## Running locally
 
